@@ -1,6 +1,6 @@
 ---
 title: Porting QUIC to Datagram Transport Layer Security (DTLS)
-abbrev: QUIC-DTLS
+abbrev: QUIC over DTLS
 docname: draft-thomson-quic-dtls-latest
 date: 2016
 category: std
@@ -33,8 +33,10 @@ informative:
 
 --- abstract
 
-The QUIC experiment defines a custom security protocol.  This document describes
-how that security protocol might be replaced with DTLS.
+The QUIC experiment defines a custom security protocol.  This was necessary to
+gain handshake latency improvements.  This document describes how that security
+protocol might be replaced with DTLS.
+
 
 --- middle
 
@@ -52,7 +54,9 @@ application data immediately, that is, zero round trip setup.  DTLS 1.3 uses a
 similar design and aims to provide the same set of improvements.
 
 This document describes how the standardized DTLS 1.3 might serve as a security
-layer for QUIC.
+layer for QUIC.  The same design could work for DTLS 1.2, though few of the
+benefits QUIC provides would be realized due to the handshake latency in
+versions of TLS prior to 1.3.
 
 Alternative designs:
 
@@ -85,13 +89,13 @@ QUIC [I-D.tsvwg-quic-protocol] can be separated into several modules:
 3. The forward error correction (FEC) module provides redundant entropy that
    allows for frames to be repaired in event of loss.
 
-4. Framing is the core of QUIC.  Framing provides several types of frame, each
-   with a specific purpose.  Framing supports frames for both congestion
-   management and stream multiplexing.  Framing also provides a liveness testing
-   capability (the PING frame).
+4. Framing comprises most of the QUIC protocol.  Framing provides a number of
+   different types of frame, each with a specific purpose.  Framing supports
+   frames for both congestion management and stream multiplexing.  Framing
+   additionally provides a liveness testing capability (the PING frame).
 
-5. Crypto provides confidentiality and integrity protection for frames.  Once
-   the handshake completes on stream 1, this protects all frames.
+5. Crypto provides confidentiality and integrity protection for frames.  All
+   frames are protected after the handshake completes on stream 1.
 
 6. Multiplexed streams are the primary payload of QUIC.  These provide reliable,
    in-order delivery of data and are used to carry the encryption handshake
@@ -119,15 +123,16 @@ The relative relationship of these components are pictorally represented in
    +--+---------------------+-------+--------+
    |              Envelope                   |
    +-----------------------------------------+
+   |                UDP                      |
+   +-----------------------------------------+
 
                              *HS = Crypto Handshake
 ~~~
 {: #quic-structure title="QUIC Structure"}
 
-
 This document describes a replacement of the cryptographic parts of QUIC.  This
-includes the negotiation messages that are exchanged on stream 1, plus the
-record protection that is used to encrypt and authenticate all other frames.
+includes the handshake messages that are exchanged on stream 1, plus the record
+protection that is used to encrypt and authenticate all other frames.
 
 
 
@@ -135,64 +140,115 @@ record protection that is used to encrypt and authenticate all other frames.
 
 TLS 1.3 provides two basic handshake modes of interest to QUIC:
 
- * A full handshake in which the client is able to send after one round trip and
-   the server immediately after receiving the first message from the client.
+ * A full handshake in which the client is able to send application data after
+   one round trip and the server immediately after receiving the first message
+   from the client.
 
  * A 0-RTT handshake in which the client uses information about the server to
-   send immediately.  This data is, however, replayable.
+   send immediately.  This data can be replayed by an attacker so it MUST NOT
+   carry a self-contained trigger for any non-idempotent action.
 
-The full TLS 1.3 handshake, is shown in {{tls-full}}, though see
-[I-D.ietf-tls-tls13] for details.
+A simplified TLS 1.3 handshake with 0-RTT application data is shown in
+{{tls-full}}, see [I-D.ietf-tls-tls13] for more options.
 
 ~~~
-         Client                                               Server
+    Client                                             Server
 
-         ClientHello
-      ^  (Certificate*)
-0-RTT |  (CertificateVerify*)
-Data  |  (Finished)
-      v  (Application Data*)
-         (end_of_early_data)        -------->
-                                                         ServerHello
-                                               {EncryptedExtensions}
-                                               {CertificateRequest*}
-                                              {ServerConfiguration*}
-                                                      {Certificate*}
-                                                {CertificateVerify*}
-                                   <--------              {Finished}
-         {Certificate*}
-         {CertificateVerify*}
-         {Finished}                -------->
+    ClientHello
+   (Finished)
+   (0-RTT Application Data)
+   (end_of_early_data)        -------->
+                                                  ServerHello
+                                         {EncryptedExtensions}
+                                         {ServerConfiguration}
+                                                 {Certificate}
+                                           {CertificateVerify}
+                             <--------              {Finished}
+   {Finished}                -------->
 
-         [Application Data]        <------->      [Application Data]
+   [Application Data]        <------->      [Application Data]
 ~~~
-{: #tls-full title="Full TLS Handshake with 0-RTT"}
+{: #tls-full title="TLS Handshake with 0-RTT"}
 
-This design would largely work for DTLS 1.2, though few of the benefits QUIC
-provides would be realized due to the handshake latency of older versions of
-TLS.
+Two additional variations on this basic handshake exchange are relevant to this
+document:
 
-## DTLS Layering Overview
+ * The server can respond to a ClientHello with a HelloRetryRequest, which adds
+   an additional round trip prior to the basic exchange.  This is needed if the
+   server wishes to request a different key exchange key from the client.
+   HelloRetryRequest might also be used to verify that the client is correctly
+   able to receive packets on the address it claims to have (see
+   {{source-address}}).
 
-QUIC completes its cryptographic handshake in stream 1, which means that the
-negotiation of keying material happens within the QUIC protocol.  This protocol
-describes a layered approach, where most QUIC messages are exchanged as DTLS
+ * A pre-shared key mode can be used for subsequent handshakes to avoid public
+   key operations.  (FFS: 0-RTT for PSK seems feasible, but it isn't clearly
+   defined right now).
+
+
+# QUIC over DTLS Structure
+
+QUIC completes its cryptographic handshake on stream 1, which means that the
+negotiation of keying material happens within the QUIC protocol.  In contrast,
+QUIC over DTLS uses a layered approach, where QUIC frames are exchanged as DTLS
 application data.
 
+~~~
+   +-----------+
+   |   HTTP    |
+   +-----------+------------+-------+--------+
+   |  Streams  | Congestion |       |        |
+   +-----------+------------+       |        |
+   |        Frames          |  FEC  | Public |
+   +------------------------+       | Reset  |
+   |         DTLS           |       |        |
+   +------------------------+-------+--------+
+   |                  UDP                    |
+   +-----------------------------------------+
+~~~
+{: #dtls-quic-stack title="QUIC over DTLS"}
 
-# QUIC in DTLS
+In this design QUIC frames are exchanged as DTLS application data.  FEC and
+public reset are provided as minimal protocols that are multiplexed with DTLS,
+using a different value for the first octet of the UDP payload (see {{packet}}
+for a sample design).
+
+The DTLS handshake is the first data that is exchanged on a connection, though
+additional QUIC-specific data might be included, see {{additions}}.
+
+Issue:
+
+: FEC and its role in this protocol in this are very poorly understood by this
+  author.  This assumes that FEC packets are not protected so that an
+  intermediary might repair an opaque QUIC exchange, but that might be
+  completely inappropriate in practice.  A more principled approach might be to
+  avoid designing FEC here and instead to examine the use of generic FEC for
+  encrypted protocols separately.  That would potentially yield improvements for
+  other protocols that build on unreliable lower layers.
+
+Alternative Design:
+
+: DTLS could be used as a drop-in replacement for the handshake protocol used by
+  QUIC crypto.  This would require less restructuring of QUIC.  However, that
+  suggests that record protection is ultimately managed by QUIC.  Such a design
+  would require the definition of a mapping from the DTLS record protection to
+  the QUIC one, which could ultimately not include new improvements to DTLS that
+  alter the record protection.
+
+
+# Mapping of QUIC to QUIC over DTLS
 
 Several changes to the structure of QUIC are necessary to make a layered design
 practical.  The remainder of this section describes how QUIC features are
 modified to fit into a layered design.
 
-## Handshake Additions
+
+## Handshake Additions {#additions}
 
 [I-D.tsvwg-quic-protocol] does not describe any connection-level state that
 might be included by a client in a standard 1-RTT handshake to aid in connection
 setup.  However, the following additions are either implemented, or might be.
 
-### Source Address Validation
+### Source Address Validation {#source-address}
 
 QUIC implementations describe a source address token.  This is an opaque blob
 that a server provides to clients when they first use a given source address.
@@ -206,8 +262,9 @@ in the TLS 1.3 configuration identifier for 0-RTT handshakes.  Servers that use
 to avoid passive linkability of connections from the same client.
 
 A server that is under load might include the same information in the cookie
-extension/field of a HelloRetryRequest (note: the current version of TLS 1.3 has
-not be modified to include this information yet).
+extension/field of a HelloRetryRequest. (Note: the current version of TLS 1.3
+does not include this information.)
+
 
 ### Congestion Management Before Handshake Completion
 
@@ -234,7 +291,8 @@ what information can be included in these early parts of the handshake.
 
 ## Record Protection
 
-Unmodified DTLS application data is all that is necessary for this design.
+No changes are required to transport frames as DTLS application data.
+
 
 ## Protocol and Version Negotiation
 
@@ -243,7 +301,22 @@ negotiate the version of QUIC that is used.  This is a more verbose mechanism
 than the scheme used in QUIC, but it is also more capable.
 
 
+## Connection ID
 
+The connection identifier serves to.  TLS 1.3 offers connection resumption using
+pre-shared keys, which might offer a 0-RTT option (open issue).  This mode is
+preferred in this case; failing that, a complete 0-RTT handshake could be used.
+
+
+## Entropy Bit
+
+It's not clear what value this provides, or even how an implementation might
+decide to set it.
+
+
+## Forward Error Control (FEC)
+
+Not enough is known about the QUIC FEC scheme to propose a solution.
 
 
 # Modifications to DTLS
@@ -257,7 +330,7 @@ before TLS 1.3 is completed.  Failing that, new extensions to TLS might be
 considered to negotiate their use.
 
 
-## Per-Packet Overhead Reduction {#packet}
+## DTLS Datagram Header {#packet}
 
 DTLS 1.2 [RFC6347] has a rather large per-packet overhead.  This overhead
 includes a content type (1 octet), protocol version (2 octets), an epoch (2
@@ -285,9 +358,9 @@ need to be backward compatible.
 {: #packet-header title="Packet Header"}
 
 Note that the second set of zero bits could be used for an expanded sequence
-number space.  On the other hand, if there is any expectation of being able to
-repair datagrams that are more than 8192 packets out of sequence, then adding
-another octet might be a better option, even if that results in destroying word
+number space.  However, if there is any expectation of being able to use
+datagrams that are more than 8192 packets out of sequence, then adding another
+octet might be a better option, even if that results in destroying word
 alignment.
 
 This design allows for unprotected messages such as unprotected handshake
