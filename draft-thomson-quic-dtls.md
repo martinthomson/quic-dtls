@@ -93,19 +93,19 @@ QUIC [I-D.tsvwg-quic-protocol] can be separated into several modules:
 5. Crypto provides confidentiality and integrity protection for frames.  Once
    the handshake completes on stream 1, this protects all frames.
 
-6. Multiplexed streams are the primary payload of QUIC.  These are used to carry
-   the encryption handshake (stream 1), HTTP header fields (stream 3), and HTTP
-   requests and responses.  Frames for managing multiplexing include those for
-   creating and destroying streams as well as flow control and priority frames.
+6. Multiplexed streams are the primary payload of QUIC.  These provide reliable,
+   in-order delivery of data and are used to carry the encryption handshake
+   (stream 1), HTTP header fields (stream 3), and HTTP requests and responses.
+   Frames for managing multiplexing include those for creating and destroying
+   streams as well as flow control and priority frames.
 
 7. Congestion management includes packet acknowledgment and other signal
    required to ensure effective use of available link capacity.
 
 8. HTTP mapping provides an adaptation to HTTP that is based on HTTP/2.
 
-This document describes a replacement of the cryptographic parts of QUIC.  This
-includes the negotiation messages that are exchanged on stream 1, plus the
-record protection that is used to encrypt and authenticate all other frames.
+The relative relationship of these components are pictorally represented in
+{{quic-structure}}.
 
 ~~~
    +----+------+
@@ -123,6 +123,12 @@ record protection that is used to encrypt and authenticate all other frames.
                              *HS = Crypto Handshake
 ~~~
 {: #quic-structure title="QUIC Structure"}
+
+
+This document describes a replacement of the cryptographic parts of QUIC.  This
+includes the negotiation messages that are exchanged on stream 1, plus the
+record protection that is used to encrypt and authenticate all other frames.
+
 
 
 ## Handshake Overview
