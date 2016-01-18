@@ -1,0 +1,672 @@
+
+
+
+
+Network Working Group                                         M. Thomson
+Internet-Draft                                                   Mozilla
+Intended status: Standards Track                        January 18, 2016
+Expires: July 21, 2016
+
+
+        Porting QUIC to Datagram Transport Layer Security (DTLS)
+                     draft-thomson-quic-dtls-latest
+
+Abstract
+
+   The QUIC experiment defines a custom security protocol.  This was
+   necessary to gain handshake latency improvements.  This document
+   describes how that security protocol might be replaced with DTLS.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on July 21, 2016.
+
+Copyright Notice
+
+   Copyright (c) 2016 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 1]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Notational Conventions  . . . . . . . . . . . . . . . . .   3
+   2.  Protocol Overview . . . . . . . . . . . . . . . . . . . . . .   3
+     2.1.  Handshake Overview  . . . . . . . . . . . . . . . . . . .   4
+   3.  QUIC over DTLS Structure  . . . . . . . . . . . . . . . . . .   5
+   4.  Mapping of QUIC to QUIC over DTLS . . . . . . . . . . . . . .   6
+     4.1.  Handshake Additions . . . . . . . . . . . . . . . . . . .   7
+       4.1.1.  Source Address Validation . . . . . . . . . . . . . .   7
+       4.1.2.  Congestion Management Before Handshake Completion . .   8
+     4.2.  Record Protection . . . . . . . . . . . . . . . . . . . .   8
+     4.3.  Protocol and Version Negotiation  . . . . . . . . . . . .   8
+     4.4.  Connection ID . . . . . . . . . . . . . . . . . . . . . .   9
+     4.5.  Entropy Bit . . . . . . . . . . . . . . . . . . . . . . .   9
+     4.6.  Forward Error Control (FEC) . . . . . . . . . . . . . . .   9
+   5.  Modifications to DTLS . . . . . . . . . . . . . . . . . . . .   9
+     5.1.  Handshake Message Loss Recovery . . . . . . . . . . . . .   9
+     5.2.  DTLS Datagram Header  . . . . . . . . . . . . . . . . . .   9
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . .  11
+   7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  11
+   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  11
+     8.1.  Normative References  . . . . . . . . . . . . . . . . . .  11
+     8.2.  Informative References  . . . . . . . . . . . . . . . . .  11
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  12
+
+1.  Introduction
+
+   QUIC [I-D.tsvwg-quic-protocol] provides a multiplexed transport for
+   HTTP [RFC7230] semantics that provides several key advantages over
+   HTTP/1.1 [RFC7230] or HTTP/2 [RFC7540] over TCP [RFC0793].
+
+   The custom security protocol designed for QUIC provides critical
+   latency improvements for connection establishment.  Absent packet
+   loss, most new connections can be established with a single round
+   trip; on subsequent connections between the same client and server,
+   the client can often send application data immediately, that is, zero
+   round trip setup.  DTLS 1.3 uses a similar design and aims to provide
+   the same set of improvements.
+
+   This document describes how the standardized DTLS 1.3 might serve as
+   a security layer for QUIC.  The same design could work for DTLS 1.2,
+   though few of the benefits QUIC provides would be realized due to the
+   handshake latency in versions of TLS prior to 1.3.
+
+   Alternative Designs:  There are other designs that are possible; and
+      many of these alternative designs are likely to be equally good.
+      The point of this document is to articulate a coherent single
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 2]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+      design.  Notes like this throughout the document are used describe
+      points where alternatives were considered.
+
+1.1.  Notational Conventions
+
+   The words "MUST", "MUST NOT", "SHOULD", and "MAY" are used in this
+   document.  It's not shouting; when they are capitalized, they have
+   the special meaning defined in [RFC2119].
+
+2.  Protocol Overview
+
+   QUIC [I-D.tsvwg-quic-protocol] can be separated into several modules:
+
+   1.  The basic frame envelope describes the common packet layout.
+       This layer includes connection identification, version
+       negotiation, and includes the indicators that allow the framing,
+       public reset, and FEC modules to be identified.
+
+   2.  The public reset is an unprotected frame that allows an
+       intermediary (an entity that is not part of the security context)
+       to request the termination of a QUIC connection.
+
+   3.  The forward error correction (FEC) module provides redundant
+       entropy that allows for frames to be repaired in event of loss.
+
+   4.  Framing comprises most of the QUIC protocol.  Framing provides a
+       number of different types of frame, each with a specific purpose.
+       Framing supports frames for both congestion management and stream
+       multiplexing.  Framing additionally provides a liveness testing
+       capability (the PING frame).
+
+   5.  Crypto provides confidentiality and integrity protection for
+       frames.  All frames are protected after the handshake completes
+       on stream 1.
+
+   6.  Multiplexed streams are the primary payload of QUIC.  These
+       provide reliable, in-order delivery of data and are used to carry
+       the encryption handshake (stream 1), HTTP header fields (stream
+       3), and HTTP requests and responses.  Frames for managing
+       multiplexing include those for creating and destroying streams as
+       well as flow control and priority frames.
+
+   7.  Congestion management includes packet acknowledgment and other
+       signal required to ensure effective use of available link
+       capacity.
+
+   8.  HTTP mapping provides an adaptation to HTTP that is based on
+       HTTP/2.
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 3]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+   The relative relationship of these components are pictorally
+   represented in Figure 1.
+
+      +----+------+
+      | HS | HTTP |
+      +----+------+------------+-------+--------+
+      |  Streams  | Congestion |       |        |
+      +-----------+------------+       |        |
+      |        Frames          |  FEC  | Public |
+      +  +---------------------+       | Reset  |
+      |  |     Crypto          |       |        |
+      +--+---------------------+-------+--------+
+      |              Envelope                   |
+      +-----------------------------------------+
+      |                UDP                      |
+      +-----------------------------------------+
+
+                                *HS = Crypto Handshake
+
+                         Figure 1: QUIC Structure
+
+   This document describes a replacement of the cryptographic parts of
+   QUIC.  This includes the handshake messages that are exchanged on
+   stream 1, plus the record protection that is used to encrypt and
+   authenticate all other frames.
+
+2.1.  Handshake Overview
+
+   TLS 1.3 provides two basic handshake modes of interest to QUIC:
+
+   o  A full handshake in which the client is able to send application
+      data after one round trip and the server immediately after
+      receiving the first message from the client.
+
+   o  A 0-RTT handshake in which the client uses information about the
+      server to send immediately.  This data can be replayed by an
+      attacker so it MUST NOT carry a self-contained trigger for any
+      non-idempotent action.
+
+   A simplified TLS 1.3 handshake with 0-RTT application data is shown
+   in Figure 2, see [I-D.ietf-tls-tls13] for more options.
+
+
+
+
+
+
+
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 4]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+       Client                                             Server
+
+       ClientHello
+      (Finished)
+      (0-RTT Application Data)
+      (end_of_early_data)        -------->
+                                                     ServerHello
+                                            {EncryptedExtensions}
+                                            {ServerConfiguration}
+                                                    {Certificate}
+                                              {CertificateVerify}
+                                <--------              {Finished}
+      {Finished}                -------->
+
+      [Application Data]        <------->      [Application Data]
+
+                    Figure 2: TLS Handshake with 0-RTT
+
+   Two additional variations on this basic handshake exchange are
+   relevant to this document:
+
+   o  The server can respond to a ClientHello with a HelloRetryRequest,
+      which adds an additional round trip prior to the basic exchange.
+      This is needed if the server wishes to request a different key
+      exchange key from the client.  HelloRetryRequest might also be
+      used to verify that the client is correctly able to receive
+      packets on the address it claims to have (see Section 4.1.1).
+
+   o  A pre-shared key mode can be used for subsequent handshakes to
+      avoid public key operations.  (FFS: 0-RTT for PSK seems feasible,
+      but it isn't clearly defined right now).
+
+3.  QUIC over DTLS Structure
+
+   QUIC completes its cryptographic handshake on stream 1, which means
+   that the negotiation of keying material happens within the QUIC
+   protocol.  In contrast, QUIC over DTLS uses a layered approach, where
+   QUIC frames are exchanged as DTLS application data.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 5]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+      +-----------+
+      |   HTTP    |
+      +-----------+------------+-------+--------+
+      |  Streams  | Congestion |       |        |
+      +-----------+------------+       |        |
+      |        Frames          |  FEC  | Public |
+      +------------------------+       | Reset  |
+      |         DTLS           |       |        |
+      +------------------------+-------+--------+
+      |                  UDP                    |
+      +-----------------------------------------+
+
+                         Figure 3: QUIC over DTLS
+
+   In this design QUIC frames are exchanged as DTLS application data.
+   FEC and public reset are provided as minimal protocols that are
+   multiplexed with DTLS, using a different value for the first octet of
+   the UDP payload (see Section 5.2 for a sample design).
+
+   The DTLS handshake is the first data that is exchanged on a
+   connection, though additional QUIC-specific data might be included,
+   see Section 4.1.
+
+   Issue:  FEC and its role in this protocol in this are very poorly
+      understood by this author.  This design assumes that FEC packets
+      are not protected so that an intermediary might repair an opaque
+      QUIC exchange.  However, that might be completely inappropriate.
+      A more principled approach might be to avoid designing FEC here
+      and instead to examine the use of generic FEC for encrypted
+      protocols separately.  That would potentially yield improvements
+      for other protocols that build on unreliable lower layers.
+
+   Alternative Design:  DTLS could be used as a drop-in replacement for
+      the handshake protocol used by QUIC crypto.  This would require
+      less restructuring of QUIC.  However, that suggests that record
+      protection is ultimately managed by QUIC, negating much of the
+      advantage provided by choosing a layered design.  For instance,
+      improvements are made to DTLS would not be immediately available
+      to QUIC.
+
+4.  Mapping of QUIC to QUIC over DTLS
+
+   Several changes to the structure of QUIC are necessary to make a
+   layered design practical.
+
+   These changes produce the handshake shown in Figure 4, where QUIC
+   frames are exchanged as DTLS application data.
+
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 6]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+       Client                                             Server
+
+       ClientHello
+        + QUIC Setup Parameters
+        + ALPN ("quic")
+      (Finished)
+      (Replayable QUIC Frames)
+      (end_of_early_data)        -------->
+                                                     ServerHello
+                                            {EncryptedExtensions}
+                                            {ServerConfiguration}
+                                                    {Certificate}
+                                              {CertificateVerify}
+                                                       {Finished}
+                                <--------           [QUIC Frames]
+      {Finished}                -------->
+
+      [QUIC Frames]             <------->           [QUIC Frames]
+
+                    Figure 4: QUIC over DTLS Handshake
+
+   The remainder of this section describes how QUIC features are
+   modified to fit into a layered design.
+
+4.1.  Handshake Additions
+
+   [I-D.tsvwg-quic-protocol] does not describe any connection-level
+   state that might be included by a client in a standard 1-RTT
+   handshake to aid in connection setup.  However, the following
+   additions are either implemented, or might be.
+
+4.1.1.  Source Address Validation
+
+   QUIC implementations describe a source address token.  This is an
+   opaque blob that a server provides to clients when they first use a
+   given source address.  The client returns this token in subsequent
+   messages as a return routeability check.  That is, the client returns
+   this token to prove that it is able to receive packets at the source
+   address that it claims.
+
+   Since this token is opaque and consumed only by the server, it can be
+   included in the TLS 1.3 configuration identifier for 0-RTT
+   handshakes.  Servers that use 0-RTT are advised to provide new
+   configuration identifiers after every handshake to avoid passive
+   linkability of connections from the same client.
+
+
+
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 7]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+   A server that is under load might include the same information in the
+   cookie extension/field of a HelloRetryRequest.  (Note: the current
+   version of TLS 1.3 does not include this information.)
+
+4.1.2.  Congestion Management Before Handshake Completion
+
+   While many congestion management parameters will be exchanged in
+   encrypted packets, this is not possible until the key exchange is
+   complete.  If a 0-RTT handshake is either not used or is
+   unsuccessful, it is still highly desirable to start a congestion
+   management scheme as soon as possible.
+
+   A new QUIC congestion extension might be included by clients to
+   include any information.  Servers do not require this extension
+   unless there is a need to use the HelloRetryRequest, in which case
+   the server can include the same extension in that message.
+
+   Encoding a QUIC frame into the extension might be advisable.  An
+   extension could be present on ClientHello and HelloRetryRequest
+   messages.  This has some potential drawbacks:
+
+   o  Extensions are vulnerable to modification prior to the successful
+      completion of the handshake.  (The key schedule is structured so
+      that the handshake encryption keys will likely differ if
+      extensions are modified, though this is not a strong guarantee.)
+
+   o  Extensions are authenticated, and therefore cannot contain updated
+      information if they need to be retransmitted.
+
+   o  Extensions that appear prior to the EncryptedExtensions do not
+      have any confidentiality protection.
+
+   Section 5.1 identifies the related issue of loss feedback mechanisms
+   during the handshaking phase.
+
+4.2.  Record Protection
+
+   No changes are required to transport frames as DTLS application data.
+
+4.3.  Protocol and Version Negotiation
+
+   Application Layer Protocol Negotiation (ALPN) [RFC7301] will be used
+   to negotiate the version of QUIC that is used.  This is a more
+   verbose mechanism than the scheme used in QUIC, but it is also more
+   capable.  For example, specific QUIC versions could be separately
+   identified: "quic-draft-01", "quic-draft-02", and "quic-underdamped-
+   cc".
+
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 8]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+4.4.  Connection ID
+
+   The connection identifier serves to identify a connection and to
+   allow a server to resume an existing connection from a new client
+   address in case of mobility events.
+
+   TLS 1.3 offers connection resumption using pre-shared keys, which
+   might permit a client to send 0-RTT application data (Note: this is
+   an open issue in TLS).  This mode could be used to continue a
+   connection rather than rely on a publicly visible correlator.
+
+   Alternatively, clients could use a new 0-RTT handshake to continue
+   existing connections.
+
+4.5.  Entropy Bit
+
+   It's not clear what value this provides, or even how an
+   implementation might decide to set it.
+
+4.6.  Forward Error Control (FEC)
+
+   Not enough is known about the QUIC FEC scheme to propose a solution.
+
+5.  Modifications to DTLS
+
+   DTLS 1.3 does not need substantial modifications in order to support
+   the more critical features of QUIC.  However, some additional changes
+   might be made to optimize DTLS for use with QUIC.
+
+   Since the work on TLS 1.3 is not yet complete, these changes might be
+   integrated before TLS 1.3 is completed.  Failing that, new extensions
+   to TLS might be considered to negotiate their use.
+
+5.1.  Handshake Message Loss Recovery
+
+   DTLS has a somewhat simplistic retransmission scheme for its
+   handshake datagrams.  An entire flight of handshake messages is sent
+   repeatedly by an endpoint until it receives a response from its peer.
+   In this regard, the QUIC scheme of acknowledgments is more precise in
+   identifying and repairing missing datagrams.  Providing a more
+   complete and accurate feedback mechanism would be valuable in
+   reducing the performance of the handshake.
+
+5.2.  DTLS Datagram Header
+
+   DTLS 1.2 [RFC6347] has a rather large per-packet overhead.  This
+   overhead includes a content type (1 octet), protocol version (2
+   octets), an epoch (2 octets), sequence number (6 octets) and length
+
+
+
+Thomson                   Expires July 21, 2016                 [Page 9]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+   (2 octets), totalling 13 octets on every record.  Of these, only the
+   sequence number and 14 bits of the record length are critical to the
+   correct functioning of the protocol and both might be reduced in
+   size.  A single bit of the epoch is useful in allowing an endpoint to
+   more easily identify when keys change.
+
+   Note that a change to the packet format needs to be carefully
+   designed if DTLS is to remain compatible with existing use cases.
+   DTLS-SRTP [RFC5764] relies on the value of the first octet of the
+   DTLS packet not overlapping with valid values for SRTP [RFC3711] and
+   STUN [RFC5389].  Only values 20 through 63 inclusive are guaranteed
+   to be available to DTLS in that context.
+
+   One possible design has a four octet header, comprising three fixed
+   bits (001), 1 epoch bit, 12 sequence number bits, 2 zero bits, and 14
+   length bits.  This format would only apply to encrypted datagrams,
+   since the ClientHello and ServerHello would need to be backward
+   compatible.
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |0 0 1|e|sequence number (13bit)|0 0|   length (14bit)          |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                          Figure 5: Packet Header
+
+   Note that the second set of zero bits could be used for an expanded
+   sequence number space.  However, if there is any expectation of being
+   able to use datagrams that are more than 4096 packets out of
+   sequence, then adding another octet might be a better option, even if
+   that results in destroying word alignment.
+
+   This design allows for unprotected messages such as unprotected
+   handshake messages and the QUIC public reset to use values between 20
+   and 31 in the first octet.  If FEC is used to repair protected
+   packets (a detail that [I-D.tsvwg-quic-protocol] is unclear on), then
+   FEC packets can use a first octet in this range as well.
+
+   Alternative Design:  If a UDP datagram is restricted to containing a
+      single DTLS record, the length field could be omitted entirely,
+      reducing the unencrypted overhead to as little as 2 octets.  The
+      drawback of this approach is that it could require some additional
+      UDP datagrams as changes to keying material can only happen when a
+      new record is sent.
+
+
+
+
+
+
+
+
+Thomson                   Expires July 21, 2016                [Page 10]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+6.  Security Considerations
+
+   Including data outside of the DTLS protection layer exposes endpoints
+   to all sorts of intermediary-initiated shenanigans.
+
+7.  IANA Considerations
+
+   This document has no IANA actions.
+
+8.  References
+
+8.1.  Normative References
+
+   [I-D.ietf-tls-tls13]
+              Rescorla, E., "The Transport Layer Security (TLS) Protocol
+              Version 1.3", draft-ietf-tls-tls13-11 (work in progress),
+              December 2015.
+
+   [I-D.tsvwg-quic-protocol]
+              Iyengar, J. and I. Swett, "QUIC: A UDP-Based Secure and
+              Reliable Transport for HTTP/2", draft-tsvwg-quic-
+              protocol-01 (work in progress), July 2015.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <http://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC7301]  Friedl, S., Popov, A., Langley, A., and E. Stephan,
+              "Transport Layer Security (TLS) Application-Layer Protocol
+              Negotiation Extension", RFC 7301, DOI 10.17487/RFC7301,
+              July 2014, <http://www.rfc-editor.org/info/rfc7301>.
+
+8.2.  Informative References
+
+   [RFC0793]  Postel, J., "Transmission Control Protocol", STD 7,
+              RFC 793, DOI 10.17487/RFC0793, September 1981,
+              <http://www.rfc-editor.org/info/rfc793>.
+
+   [RFC3711]  Baugher, M., McGrew, D., Naslund, M., Carrara, E., and K.
+              Norrman, "The Secure Real-time Transport Protocol (SRTP)",
+              RFC 3711, DOI 10.17487/RFC3711, March 2004,
+              <http://www.rfc-editor.org/info/rfc3711>.
+
+   [RFC5389]  Rosenberg, J., Mahy, R., Matthews, P., and D. Wing,
+              "Session Traversal Utilities for NAT (STUN)", RFC 5389,
+              DOI 10.17487/RFC5389, October 2008,
+              <http://www.rfc-editor.org/info/rfc5389>.
+
+
+
+Thomson                   Expires July 21, 2016                [Page 11]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
+   [RFC5764]  McGrew, D. and E. Rescorla, "Datagram Transport Layer
+              Security (DTLS) Extension to Establish Keys for the Secure
+              Real-time Transport Protocol (SRTP)", RFC 5764,
+              DOI 10.17487/RFC5764, May 2010,
+              <http://www.rfc-editor.org/info/rfc5764>.
+
+   [RFC6347]  Rescorla, E. and N. Modadugu, "Datagram Transport Layer
+              Security Version 1.2", RFC 6347, DOI 10.17487/RFC6347,
+              January 2012, <http://www.rfc-editor.org/info/rfc6347>.
+
+   [RFC7230]  Fielding, R., Ed. and J. Reschke, Ed., "Hypertext Transfer
+              Protocol (HTTP/1.1): Message Syntax and Routing",
+              RFC 7230, DOI 10.17487/RFC7230, June 2014,
+              <http://www.rfc-editor.org/info/rfc7230>.
+
+   [RFC7540]  Belshe, M., Peon, R., and M. Thomson, Ed., "Hypertext
+              Transfer Protocol Version 2 (HTTP/2)", RFC 7540,
+              DOI 10.17487/RFC7540, May 2015,
+              <http://www.rfc-editor.org/info/rfc7540>.
+
+Author's Address
+
+   Martin Thomson
+   Mozilla
+
+   Email: martin.thomson@gmail.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thomson                   Expires July 21, 2016                [Page 12]
