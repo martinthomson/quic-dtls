@@ -30,6 +30,7 @@ informative:
   RFC5764:
   RFC5389:
   RFC3711:
+  RFC0793:
 
 --- abstract
 
@@ -43,12 +44,12 @@ protocol might be replaced with DTLS.
 # Introduction
 
 QUIC [I-D.tsvwg-quic-protocol] provides a multiplexed transport for HTTP
-[RFC7230] semantics that provides several key advantages over TCP-based
-transports like HTTP/1.1 [RFC7230] and HTTP/2 [RFC7540].
+[RFC7230] semantics that provides several key advantages over HTTP/1.1 [RFC7230]
+or HTTP/2 [RFC7540] over TCP [RFC0793].
 
 The custom security protocol designed for QUIC provides critical latency
 improvements for connection establishment.  Absent packet loss, most new
-connections can be established with a single round trip; on subseuqent
+connections can be established with a single round trip; on subsequent
 connections between the same client and server, the client can often send
 application data immediately, that is, zero round trip setup.  DTLS 1.3 uses a
 similar design and aims to provide the same set of improvements.
@@ -58,7 +59,7 @@ layer for QUIC.  The same design could work for DTLS 1.2, though few of the
 benefits QUIC provides would be realized due to the handshake latency in
 versions of TLS prior to 1.3.
 
-Alternative designs:
+Alternative Designs:
 
 : There are other designs that are possible; and many of these alternative
   designs are likely to be equally good.  The point of this document is to
@@ -218,27 +219,54 @@ additional QUIC-specific data might be included, see {{additions}}.
 Issue:
 
 : FEC and its role in this protocol in this are very poorly understood by this
-  author.  This assumes that FEC packets are not protected so that an
-  intermediary might repair an opaque QUIC exchange, but that might be
-  completely inappropriate in practice.  A more principled approach might be to
-  avoid designing FEC here and instead to examine the use of generic FEC for
-  encrypted protocols separately.  That would potentially yield improvements for
-  other protocols that build on unreliable lower layers.
+  author.  This design assumes that FEC packets are not protected so that an
+  intermediary might repair an opaque QUIC exchange.  However, that might be
+  completely inappropriate.  A more principled approach might be to avoid
+  designing FEC here and instead to examine the use of generic FEC for encrypted
+  protocols separately.  That would potentially yield improvements for other
+  protocols that build on unreliable lower layers.
 
 Alternative Design:
 
 : DTLS could be used as a drop-in replacement for the handshake protocol used by
   QUIC crypto.  This would require less restructuring of QUIC.  However, that
-  suggests that record protection is ultimately managed by QUIC.  Such a design
-  would require the definition of a mapping from the DTLS record protection to
-  the QUIC one, which could ultimately not include new improvements to DTLS that
-  alter the record protection.
+  suggests that record protection is ultimately managed by QUIC, negating much
+  of the advantage provided by choosing a layered design.  For instance,
+  improvements are made to DTLS would not be immediately available to QUIC.
 
 
 # Mapping of QUIC to QUIC over DTLS
 
 Several changes to the structure of QUIC are necessary to make a layered design
-practical.  The remainder of this section describes how QUIC features are
+practical.
+
+These changes produce the handshake shown in {{quic-dtls-handshake}}, where QUIC
+frames are exchanged as DTLS application data.
+
+~~~
+    Client                                             Server
+
+    ClientHello
+     + QUIC Setup Parameters
+     + ALPN ("quic")
+   (Finished)
+   (Replayable QUIC Frames)
+   (end_of_early_data)        -------->
+                                                  ServerHello
+                                         {EncryptedExtensions}
+                                         {ServerConfiguration}
+                                                 {Certificate}
+                                           {CertificateVerify}
+                                                    {Finished}
+                             <--------           [QUIC Frames]
+   {Finished}                -------->
+
+   [QUIC Frames]             <------->           [QUIC Frames]
+~~~
+{: #quic-dtls-handshake title="QUIC over DTLS Handshake"}
+
+
+The remainder of this section describes how QUIC features are
 modified to fit into a layered design.
 
 
@@ -247,6 +275,7 @@ modified to fit into a layered design.
 [I-D.tsvwg-quic-protocol] does not describe any connection-level state that
 might be included by a client in a standard 1-RTT handshake to aid in connection
 setup.  However, the following additions are either implemented, or might be.
+
 
 ### Source Address Validation {#source-address}
 
@@ -269,24 +298,32 @@ does not include this information.)
 ### Congestion Management Before Handshake Completion
 
 While many congestion management parameters will be exchanged in encrypted
-packets, this is not possible until the key exchange is complete.  For 1-RTT
-handshakes, it is highly desirable to start congestion management as soon as
-possible.
+packets, this is not possible until the key exchange is complete.  If a 0-RTT
+handshake is either not used or is unsuccessful, it is still highly desirable to
+start a congestion management scheme as soon as possible.
 
 A new QUIC congestion extension might be included by clients to include any
 information.  Servers do not require this extension unless there is a need to
 use the HelloRetryRequest, in which case the server can include the same
 extension in that message.
 
-Since little information is available on what might be needed here, the only
-recommendation this document can make is to say that encoding a QUIC frame into
-the extension might be advisable.
+Encoding a QUIC frame into the extension might be advisable.  An extension could
+be present on ClientHello and HelloRetryRequest messages.  This has some
+potential drawbacks:
 
-The initial message from the client will not have confidentiality protection,
-and nor will subsequent messages if the server uses HelloRetryRequest for any
-reason.  These messages will also be subject to modification, only being
-authenticated if the handshake completes successfully.  This could greatly limit
-what information can be included in these early parts of the handshake.
+* Extensions are vulnerable to modification prior to the successful completion
+  of the handshake.  (The key schedule is structured so that the handshake
+  encryption keys will likely differ if extensions are modified, though this is
+  not a strong guarantee.)
+
+* Extensions are authenticated, and therefore cannot contain updated information
+  if they need to be retransmitted.
+
+* Extensions that appear prior to the EncryptedExtensions do not have any
+  confidentiality protection.
+
+{{dtls-feedback}} identifies the related issue of loss feedback mechanisms
+during the handshaking phase.
 
 
 ## Record Protection
@@ -298,14 +335,24 @@ No changes are required to transport frames as DTLS application data.
 
 Application Layer Protocol Negotiation (ALPN) [RFC7301] will be used to
 negotiate the version of QUIC that is used.  This is a more verbose mechanism
-than the scheme used in QUIC, but it is also more capable.
+than the scheme used in QUIC, but it is also more capable. For example, specific
+QUIC versions could be separately identified: "quic-draft-01", "quic-draft-02",
+and "quic-underdamped-cc".
 
 
 ## Connection ID
 
-The connection identifier serves to.  TLS 1.3 offers connection resumption using
-pre-shared keys, which might offer a 0-RTT option (open issue).  This mode is
-preferred in this case; failing that, a complete 0-RTT handshake could be used.
+The connection identifier serves to identify a connection and to allow a server
+to resume an existing connection from a new client address in case of mobility
+events.
+
+TLS 1.3 offers connection resumption using pre-shared keys, which might permit a
+client to send 0-RTT application data (Note: this is an open issue in TLS).
+This mode could be used to continue a connection rather than rely on a publicly
+visible correlator.
+
+Alternatively, clients could use a new 0-RTT handshake to continue existing
+connections.
 
 
 ## Entropy Bit
@@ -330,6 +377,16 @@ before TLS 1.3 is completed.  Failing that, new extensions to TLS might be
 considered to negotiate their use.
 
 
+## Handshake Message Loss Recovery {#dtls-feedback}
+
+DTLS has a somewhat simplistic retransmission scheme for its handshake
+datagrams.  An entire flight of handshake messages is sent repeatedly by an
+endpoint until it receives a response from its peer.  In this regard, the QUIC
+scheme of acknowledgments is more precise in identifying and repairing missing
+datagrams.  Providing a more complete and accurate feedback mechanism would be
+valuable in reducing the performance of the handshake.
+
+
 ## DTLS Datagram Header {#packet}
 
 DTLS 1.2 [RFC6347] has a rather large per-packet overhead.  This overhead
@@ -337,7 +394,8 @@ includes a content type (1 octet), protocol version (2 octets), an epoch (2
 octets), sequence number (6 octets) and length (2 octets), totalling 13 octets
 on every record.  Of these, only the sequence number and 14 bits of the record
 length are critical to the correct functioning of the protocol and both might be
-reduced in size.
+reduced in size.  A single bit of the epoch is useful in allowing an endpoint to
+more easily identify when keys change.
 
 Note that a change to the packet format needs to be carefully designed if DTLS
 is to remain compatible with existing use cases.  DTLS-SRTP [RFC5764] relies on
@@ -346,33 +404,36 @@ values for SRTP [RFC3711] and STUN [RFC5389].  Only values 20 through 63
 inclusive are guaranteed to be available to DTLS in that context.
 
 One possible design has a four octet header, comprising three fixed bits (001),
-13 sequence number bits, 2 zero bits, and 14 length bits.  This format would
-only apply to encrypted datagrams, since the ClientHello and ServerHello would
-need to be backward compatible.
+1 epoch bit, 12 sequence number bits, 2 zero bits, and 14 length bits.  This
+format would only apply to encrypted datagrams, since the ClientHello and
+ServerHello would need to be backward compatible.
 
 ~~~
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|0 0 1| sequence number (13bit) |0 0|   length (14bit)          |
+|0 0 1|e|sequence number (13bit)|0 0|   length (14bit)          |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ~~~
 {: #packet-header title="Packet Header"}
 
 Note that the second set of zero bits could be used for an expanded sequence
 number space.  However, if there is any expectation of being able to use
-datagrams that are more than 8192 packets out of sequence, then adding another
+datagrams that are more than 4096 packets out of sequence, then adding another
 octet might be a better option, even if that results in destroying word
 alignment.
 
 This design allows for unprotected messages such as unprotected handshake
 messages and the QUIC public reset to use values between 20 and 31 in the first
 octet.  If FEC is used to repair protected packets (a detail that
-[I-D.tsvwg-quic-protocol] is unclear on), then FEC packets can use a first byte
+[I-D.tsvwg-quic-protocol] is unclear on), then FEC packets can use a first octet
 in this range as well.
 
 Alternative Design:
 
-: If a single DTLS record is contained in each UDP datagram, then the length
-  field might be omitted entirely.
+: If a UDP datagram is restricted to containing a single DTLS record, the length
+  field could be omitted entirely, reducing the unencrypted overhead to as
+  little as 2 octets.  The drawback of this approach is that it could require
+  some additional UDP datagrams as changes to keying material can only happen
+  when a new record is sent.
 
 
 # Security Considerations
