@@ -2,7 +2,7 @@
 
 This is the working area for the Individual internet-draft, "Porting QUIC to Datagram Transport Layer Security (DTLS)".
 
-* [Editor's copy](https://.github.io//)
+* [Editor's copy](https://martinthomson.github.io/quic-dtls/)
 * [Individual Draft] (https://tools.ietf.org/html/draft-thomson-quic-dtls)
 
 
