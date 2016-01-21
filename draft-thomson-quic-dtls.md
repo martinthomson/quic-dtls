@@ -96,13 +96,14 @@ QUIC [I-D.tsvwg-quic-protocol] can be separated into several modules:
    additionally provides a liveness testing capability (the PING frame).
 
 5. Crypto provides confidentiality and integrity protection for frames.  All
-   frames are protected after the handshake completes on stream 1.
+   frames are protected after the handshake completes on stream 1.  Prior to
+   this, data is protected with the 0-RTT keys.
 
 6. Multiplexed streams are the primary payload of QUIC.  These provide reliable,
-   in-order delivery of data and are used to carry the encryption handshake
-   (stream 1), HTTP header fields (stream 3), and HTTP requests and responses.
-   Frames for managing multiplexing include those for creating and destroying
-   streams as well as flow control and priority frames.
+   in-order delivery of data and are used to carry the encryption handshake and
+   transport parameters (stream 1), HTTP header fields (stream 3), and HTTP
+   requests and responses.  Frames for managing multiplexing include those for
+   creating and destroying streams as well as flow control and priority frames.
 
 7. Congestion management includes packet acknowledgment and other signal
    required to ensure effective use of available link capacity.
@@ -482,9 +483,7 @@ alignment.
 
 This design allows for unprotected messages such as unprotected handshake
 messages and the QUIC public reset to use values between 20 and 31 in the first
-octet.  If FEC is used to repair protected packets (a detail that
-[I-D.tsvwg-quic-protocol] is unclear on), then FEC packets can use a first octet
-in this range as well.
+octet.
 
 Alternative Design:
 
@@ -494,11 +493,32 @@ Alternative Design:
   some additional UDP datagrams during the handshake, since changes to keying
   material can only happen when a new record is sent.
 
+: In TLS 1.3, these transitions are infrequent aside from during the initial
+  handshake:
+
+    * the client's first client is only split if 0-RTT is used, in which case 4
+      packets are required
+
+    * the server's first flight contains handshake records with two different
+      traffic keys and optionally application data records and therefore three
+      datagrams
+
+    * the client's second flight contains two different packets
+
 
 # Security Considerations
 
 Including data outside of the DTLS protection layer exposes endpoints to all
 sorts of intermediary-initiated shenanigans.
+
+This includes transport parameter negotiation, which might ultimately have
+integrity protection.  If transport configuration is grounds for rejecting a
+connection, and a client adjusts its proposed configuration in response to a
+rejection, and that rejection is not authenticated (it won't be), then an
+attacker can force a client to adjust their configuration.
+
+Clients are therefore encouraged to not alter their ClientHello or its contents
+in response to unauthenticated rejections or network errors.
 
 
 # IANA Considerations
