@@ -115,17 +115,19 @@ The relative relationship of these components are pictorally represented in
 ~~~
    +----+------+
    | HS | HTTP |
-   +----+------+------------+-------+--------+
-   |  Streams  | Congestion |       |        |
-   +-----------+------------+       |        |
-   |        Frames          |  FEC  | Public |
-   +  +---------------------+       | Reset  |
-   |  |     Crypto          |       |        |
-   +--+---------------------+-------+--------+
-   |              Envelope                   |
-   +-----------------------------------------+
-   |                UDP                      |
-   +-----------------------------------------+
+   +----+------+------------+
+   |  Streams  | Congestion |
+   +-----------+------------+
+   |        Frames          |
+   +  +---------------------+
+   |  |      FEC            +--------+
+   +  +---------------------+ Public |
+   |  |     Crypto          | Reset  |
+   +--+---------------------+--------+
+   |              Envelope           |
+   +---------------------------------+
+   |                UDP              |
+   +---------------------------------+
 
                              *HS = Crypto Handshake
 ~~~
@@ -164,7 +166,8 @@ A simplified TLS 1.3 handshake with 0-RTT application data is shown in
                                          {ServerConfiguration}
                                                  {Certificate}
                                            {CertificateVerify}
-                             <--------              {Finished}
+                                                    {Finished}
+                             <--------      [Application Data]
    {Finished}                -------->
 
    [Application Data]        <------->      [Application Data]
@@ -196,15 +199,17 @@ application data.
 ~~~
    +-----------+
    |   HTTP    |
-   +-----------+------------+-------+--------+
-   |  Streams  | Congestion |       |        |
-   +-----------+------------+       |        |
-   |        Frames          |  FEC  | Public |
-   +------------------------+       | Reset  |
-   |         DTLS           |       |        |
-   +------------------------+-------+--------+
-   |                  UDP                    |
-   +-----------------------------------------+
+   +-----------+------------+
+   |  Streams  | Congestion |
+   +-----------+------------+
+   |        Frames          |
+   +------------------------+
+   |         FEC            +--------+
+   +------------------------+ Public |
+   |         DTLS           | Reset  |
+   +------------------------+--------+
+   |                  UDP            |
+   +---------------------------------+
 ~~~
 {: #dtls-quic-stack title="QUIC over DTLS"}
 
@@ -216,16 +221,6 @@ for a sample design).
 The DTLS handshake is the first data that is exchanged on a connection, though
 additional QUIC-specific data might be included, see {{additions}}.
 
-Issue:
-
-: FEC and its role in this protocol in this are very poorly understood by this
-  author.  This design assumes that FEC packets are not protected so that an
-  intermediary might repair an opaque QUIC exchange.  However, that might be
-  completely inappropriate.  A more principled approach might be to avoid
-  designing FEC here and instead to examine the use of generic FEC for encrypted
-  protocols separately.  That would potentially yield improvements for other
-  protocols that build on unreliable lower layers.
-
 Alternative Design:
 
 : DTLS could be used as a drop-in replacement for the handshake protocol used by
@@ -233,6 +228,12 @@ Alternative Design:
   suggests that record protection is ultimately managed by QUIC, negating much
   of the advantage provided by choosing a layered design.  For instance,
   improvements are made to DTLS would not be immediately available to QUIC.
+
+  A more serious problem here is the synchronization of frames with the traffic
+  keys used to protect them.  Within DTLS, the transition from cleartext to
+  handshake traffic keys and application traffic keys is carefully synchronized
+  with the handshake.  Coordinating multiple key derivations for use in a
+  drop-in design would require careful synchronization.
 
 
 # Mapping of QUIC to QUIC over DTLS
@@ -295,21 +296,36 @@ extension/field of a HelloRetryRequest. (Note: the current version of TLS 1.3
 does not include this information.)
 
 
+### Transport Parameter Advertisement
+
+A client describes characteristics of the transport protocol it intends to
+conduct with the server in a new `quic_transport_parameters` extension in its
+ClientHello.  The server uses this information to determine whether it wants to
+continue the connection, request source address validation, or reject the
+connection.  Having this information unencrypted permits this check to occur
+prior to committing the resources needed to complete the initial key exchange.
+
+If the server decides to complete the connection, it generates a corresponding
+response and includes it in the EncryptedExtensions message.
+
+These parameters are not confidentiality-protected when sent by the client, but
+the server response is protected by the handshake traffic keys.  The entire
+exchange is integrity protected once the handshake completes.
+
+This information is not used by DTLS, but passed to the QUIC protocol as
+initialization parmeters.
+
 ### Congestion Management Before Handshake Completion
 
-While many congestion management parameters will be exchanged in encrypted
-packets, this is not possible until the key exchange is complete.  If a 0-RTT
-handshake is either not used or is unsuccessful, it is still highly desirable to
-start a congestion management scheme as soon as possible.
+In addition to the parameters for the transport, congestion feedback might need
+be exchanged prior to completing a key exchange is complete.
 
 A new QUIC congestion extension might be included by clients to include any
-information.  Servers do not require this extension unless there is a need to
-use the HelloRetryRequest, in which case the server can include the same
-extension in that message.
+information.  Servers might include this extension if there is a need to use the
+HelloRetryRequest also.  Once the handshake is complete, this information can be
+exchanged as QUIC frames.
 
-Encoding a QUIC frame into the extension might be advisable.  An extension could
-be present on ClientHello and HelloRetryRequest messages.  This has some
-potential drawbacks:
+The use of extensions for the purpose has some potential drawbacks:
 
 * Extensions are vulnerable to modification prior to the successful completion
   of the handshake.  (The key schedule is structured so that the handshake
@@ -357,13 +373,56 @@ connections.
 
 ## Entropy Bit
 
-It's not clear what value this provides, or even how an implementation might
-decide to set it.
+This can be removed, and is (apparently) already have been removed from
+current implementations.
 
 
 ## Forward Error Control (FEC)
 
-Not enough is known about the QUIC FEC scheme to propose a solution.
+FEC can be covered by encryption and forms part of the framing layer.  The
+current protocol has some external parts, but these can be encrypted.
+
+
+## Sequence Numbers
+
+QUIC relies on a single sequence number space for identifying frames.  DTLS does
+not provide a contiguous sequence number space as each change of traffic keys
+causes sequence numbers to be reset.  This change occurs at the transition from
+0-RTT application data to full application data, plus when traffic keys are
+updated.
+
+DTLS sequence numbers could be used in QUIC acknowledgments, but some
+modification would be needed to allow for the epoch change and sequence number
+resets.
+
+A possible design has separate acknowledgment frames for different epochs.
+Reserving a small number of bits (a little as 1 or 2 bits would suffice) for
+identifying the epoch in longer sequence number representations would allow each
+acknowledgment frame be limited to that epoch.  Shorter representations might
+omit the epoch bits so that normal operation can identify a wider range of
+packets without inflating packet size inordinately.
+
+The consequence of this design is that there will be multiple acknowledgment
+frames sent for a short period after an epoch change.  A modification to QUIC's
+STOP_WAITING frame might be used to quickly end any need for acknowledgment on
+the expired epoch.
+
+Editor's Note:
+
+: The design of STOP_WAITING relies on the sequence number of the packet that it
+  is contained in.  That design doesn't work in this case.  Adding a single
+  octet that included the affected epoch would also allow the packet to be
+  self-contained and include a the sequence number length.
+
+There is no need to explicitly signal the sequence number of the last packet in
+an epoch.  The last sequence number for the epoch will be included in an
+acknowledgment.
+
+Alternative Design:
+
+: A separate sequence number space could be added to the DTLS-protected QUIC
+  frames, inside the protected DTLS record.  This is potentially redundant, but
+  it ensures that QUIC is more independent of DTLS.
 
 
 # Modifications to DTLS
@@ -432,8 +491,8 @@ Alternative Design:
 : If a UDP datagram is restricted to containing a single DTLS record, the length
   field could be omitted entirely, reducing the unencrypted overhead to as
   little as 2 octets.  The drawback of this approach is that it could require
-  some additional UDP datagrams as changes to keying material can only happen
-  when a new record is sent.
+  some additional UDP datagrams during the handshake, since changes to keying
+  material can only happen when a new record is sent.
 
 
 # Security Considerations
