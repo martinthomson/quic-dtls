@@ -81,10 +81,10 @@ Table of Contents
      5.2.  DTLS Datagram Header  . . . . . . . . . . . . . . . . . .  11
    6.  Security Considerations . . . . . . . . . . . . . . . . . . .  12
    7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  12
-   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  12
-     8.1.  Normative References  . . . . . . . . . . . . . . . . . .  12
+   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  13
+     8.1.  Normative References  . . . . . . . . . . . . . . . . . .  13
      8.2.  Informative References  . . . . . . . . . . . . . . . . .  13
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  13
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  14
 
 1.  Introduction
 
@@ -150,18 +150,18 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
    5.  Crypto provides confidentiality and integrity protection for
        frames.  All frames are protected after the handshake completes
-       on stream 1.
+       on stream 1.  Prior to this, data is protected with the 0-RTT
+       keys.
 
    6.  Multiplexed streams are the primary payload of QUIC.  These
        provide reliable, in-order delivery of data and are used to carry
-       the encryption handshake (stream 1), HTTP header fields (stream
-       3), and HTTP requests and responses.  Frames for managing
-       multiplexing include those for creating and destroying streams as
-       well as flow control and priority frames.
+       the encryption handshake and transport parameters (stream 1),
+       HTTP header fields (stream 3), and HTTP requests and responses.
+       Frames for managing multiplexing include those for creating and
+       destroying streams as well as flow control and priority frames.
 
-   7.  Congestion management includes packet acknowledgment and other
-       signal required to ensure effective use of available link
-       capacity.
+
+
 
 
 
@@ -169,6 +169,10 @@ Thomson                   Expires July 24, 2016                 [Page 3]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
+
+   7.  Congestion management includes packet acknowledgment and other
+       signal required to ensure effective use of available link
+       capacity.
 
    8.  HTTP mapping provides an adaptation to HTTP that is based on
        HTTP/2.
@@ -214,10 +218,6 @@ Internet-Draft               QUIC over DTLS                 January 2016
       attacker so it MUST NOT carry a self-contained trigger for any
       non-idempotent action.
 
-   A simplified TLS 1.3 handshake with 0-RTT application data is shown
-   in Figure 2, see [I-D.ietf-tls-tls13] for more options.
-
-
 
 
 
@@ -225,6 +225,9 @@ Thomson                   Expires July 24, 2016                 [Page 4]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
+
+   A simplified TLS 1.3 handshake with 0-RTT application data is shown
+   in Figure 2, see [I-D.ietf-tls-tls13] for more options.
 
        Client                                             Server
 
@@ -265,9 +268,6 @@ Internet-Draft               QUIC over DTLS                 January 2016
    that the negotiation of keying material happens within the QUIC
    protocol.  In contrast, QUIC over DTLS uses a layered approach, where
    QUIC frames are exchanged as DTLS application data.
-
-
-
 
 
 
@@ -623,9 +623,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
    This design allows for unprotected messages such as unprotected
    handshake messages and the QUIC public reset to use values between 20
-   and 31 in the first octet.  If FEC is used to repair protected
-   packets (a detail that [I-D.tsvwg-quic-protocol] is unclear on), then
-   FEC packets can use a first octet in this range as well.
+   and 31 in the first octet.
 
    Alternative Design:  If a UDP datagram is restricted to containing a
       single DTLS record, the length field could be omitted entirely,
@@ -634,14 +632,47 @@ Internet-Draft               QUIC over DTLS                 January 2016
       UDP datagrams during the handshake, since changes to keying
       material can only happen when a new record is sent.
 
+      In TLS 1.3, these transitions are infrequent aside from during the
+      initial handshake:
+
+      *  the client's first client is only split if 0-RTT is used, in
+         which case 4 packets are required
+
+      *  the server's first flight contains handshake records with two
+         different traffic keys and optionally application data records
+         and therefore three datagrams
+
+      *  the client's second flight contains two different packets
+
 6.  Security Considerations
 
    Including data outside of the DTLS protection layer exposes endpoints
    to all sorts of intermediary-initiated shenanigans.
 
+   This includes transport parameter negotiation, which might ultimately
+   have integrity protection.  If transport configuration is grounds for
+   rejecting a connection, and a client adjusts its proposed
+   configuration in response to a rejection, and that rejection is not
+   authenticated (it won't be), then an attacker can force a client to
+   adjust their configuration.
+
+   Clients are therefore encouraged to not alter their ClientHello or
+   its contents in response to unauthenticated rejections or network
+   errors.
+
 7.  IANA Considerations
 
    This document has no IANA actions.
+
+
+
+
+
+
+Thomson                   Expires July 24, 2016                [Page 12]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
 
 8.  References
 
@@ -667,13 +698,6 @@ Internet-Draft               QUIC over DTLS                 January 2016
               Negotiation Extension", RFC 7301, DOI 10.17487/RFC7301,
               July 2014, <http://www.rfc-editor.org/info/rfc7301>.
 
-
-
-Thomson                   Expires July 24, 2016                [Page 12]
-
-Internet-Draft               QUIC over DTLS                 January 2016
-
-
 8.2.  Informative References
 
    [RFC0793]  Postel, J., "Transmission Control Protocol", STD 7,
@@ -695,6 +719,16 @@ Internet-Draft               QUIC over DTLS                 January 2016
               Real-time Transport Protocol (SRTP)", RFC 5764,
               DOI 10.17487/RFC5764, May 2010,
               <http://www.rfc-editor.org/info/rfc5764>.
+
+
+
+
+
+
+Thomson                   Expires July 24, 2016                [Page 13]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
 
    [RFC6347]  Rescorla, E. and N. Modadugu, "Datagram Transport Layer
               Security Version 1.2", RFC 6347, DOI 10.17487/RFC6347,
@@ -725,4 +759,26 @@ Author's Address
 
 
 
-Thomson                   Expires July 24, 2016                [Page 13]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thomson                   Expires July 24, 2016                [Page 14]
