@@ -496,7 +496,7 @@ Alternative Design:
 : In TLS 1.3, these transitions are infrequent aside from during the initial
   handshake:
 
-    * the client's first client is only split if 0-RTT is used, in which case 4
+    * the client's first flight is only split if 0-RTT is used, in which case 4
       packets are required
 
     * the server's first flight contains handshake records with two different
