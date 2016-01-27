@@ -4,8 +4,8 @@
 
 Network Working Group                                         M. Thomson
 Internet-Draft                                                   Mozilla
-Intended status: Standards Track                        January 21, 2016
-Expires: July 24, 2016
+Intended status: Standards Track                        January 27, 2016
+Expires: July 30, 2016
 
 
         Porting QUIC to Datagram Transport Layer Security (DTLS)
@@ -32,7 +32,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on July 24, 2016.
+   This Internet-Draft will expire on July 30, 2016.
 
 Copyright Notice
 
@@ -53,7 +53,7 @@ Copyright Notice
 
 
 
-Thomson                   Expires July 24, 2016                 [Page 1]
+Thomson                   Expires July 30, 2016                 [Page 1]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -81,9 +81,10 @@ Table of Contents
      5.2.  DTLS Datagram Header  . . . . . . . . . . . . . . . . . .  11
    6.  Security Considerations . . . . . . . . . . . . . . . . . . .  12
    7.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  12
-   8.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  13
-     8.1.  Normative References  . . . . . . . . . . . . . . . . . .  13
-     8.2.  Informative References  . . . . . . . . . . . . . . . . .  13
+   8.  Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  13
+   9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  13
+     9.1.  Normative References  . . . . . . . . . . . . . . . . . .  13
+     9.2.  Informative References  . . . . . . . . . . . . . . . . .  13
    Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  14
 
 1.  Introduction
@@ -108,8 +109,7 @@ Table of Contents
 
 
 
-
-Thomson                   Expires July 24, 2016                 [Page 2]
+Thomson                   Expires July 30, 2016                 [Page 2]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -165,7 +165,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                 [Page 3]
+Thomson                   Expires July 30, 2016                 [Page 3]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -221,7 +221,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                 [Page 4]
+Thomson                   Expires July 30, 2016                 [Page 4]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -277,7 +277,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                 [Page 5]
+Thomson                   Expires July 30, 2016                 [Page 5]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -333,7 +333,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                 [Page 6]
+Thomson                   Expires July 30, 2016                 [Page 6]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -389,7 +389,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                 [Page 7]
+Thomson                   Expires July 30, 2016                 [Page 7]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -445,7 +445,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                 [Page 8]
+Thomson                   Expires July 30, 2016                 [Page 8]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -501,7 +501,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                 [Page 9]
+Thomson                   Expires July 30, 2016                 [Page 9]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -557,7 +557,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                [Page 10]
+Thomson                   Expires July 30, 2016                [Page 10]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -613,7 +613,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
 
 
-Thomson                   Expires July 24, 2016                [Page 11]
+Thomson                   Expires July 30, 2016                [Page 11]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
@@ -664,19 +664,24 @@ Internet-Draft               QUIC over DTLS                 January 2016
 
    This document has no IANA actions.
 
+   - back
 
 
 
 
-
-Thomson                   Expires July 24, 2016                [Page 12]
+Thomson                   Expires July 30, 2016                [Page 12]
 
 Internet-Draft               QUIC over DTLS                 January 2016
 
 
-8.  References
+8.  Acknowledgments
 
-8.1.  Normative References
+   Christian Huitema's knowledge of QUIC is far better than my own.
+   This would be even more inaccurate if not for his assistance.
+
+9.  References
+
+9.1.  Normative References
 
    [I-D.ietf-tls-tls13]
               Rescorla, E., "The Transport Layer Security (TLS) Protocol
@@ -698,7 +703,7 @@ Internet-Draft               QUIC over DTLS                 January 2016
               Negotiation Extension", RFC 7301, DOI 10.17487/RFC7301,
               July 2014, <http://www.rfc-editor.org/info/rfc7301>.
 
-8.2.  Informative References
+9.2.  Informative References
 
    [RFC0793]  Postel, J., "Transmission Control Protocol", STD 7,
               RFC 793, DOI 10.17487/RFC0793, September 1981,
@@ -714,21 +719,22 @@ Internet-Draft               QUIC over DTLS                 January 2016
               DOI 10.17487/RFC5389, October 2008,
               <http://www.rfc-editor.org/info/rfc5389>.
 
+
+
+
+
+
+
+Thomson                   Expires July 30, 2016                [Page 13]
+
+Internet-Draft               QUIC over DTLS                 January 2016
+
+
    [RFC5764]  McGrew, D. and E. Rescorla, "Datagram Transport Layer
               Security (DTLS) Extension to Establish Keys for the Secure
               Real-time Transport Protocol (SRTP)", RFC 5764,
               DOI 10.17487/RFC5764, May 2010,
               <http://www.rfc-editor.org/info/rfc5764>.
-
-
-
-
-
-
-Thomson                   Expires July 24, 2016                [Page 13]
-
-Internet-Draft               QUIC over DTLS                 January 2016
-
 
    [RFC6347]  Rescorla, E. and N. Modadugu, "Datagram Transport Layer
               Security Version 1.2", RFC 6347, DOI 10.17487/RFC6347,
@@ -775,10 +781,4 @@ Author's Address
 
 
 
-
-
-
-
-
-
-Thomson                   Expires July 24, 2016                [Page 14]
+Thomson                   Expires July 30, 2016                [Page 14]
