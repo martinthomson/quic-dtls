@@ -139,7 +139,6 @@ includes the handshake messages that are exchanged on stream 1, plus the record
 protection that is used to encrypt and authenticate all other frames.
 
 
-
 ## Handshake Overview
 
 TLS 1.3 provides two basic handshake modes of interest to QUIC:
