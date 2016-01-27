@@ -524,3 +524,10 @@ in response to unauthenticated rejections or network errors.
 # IANA Considerations
 
 This document has no IANA actions.
+
+-- back
+
+# Acknowledgments
+
+Christian Huitema's knowledge of QUIC is far better than my own.  This would be
+even more inaccurate if not for his assistance.
