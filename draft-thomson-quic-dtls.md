@@ -185,8 +185,8 @@ document:
    {{source-address}}).
 
  * A pre-shared key mode can be used for subsequent handshakes to avoid public
-   key operations.  (FFS: 0-RTT for PSK seems feasible, but it isn't clearly
-   defined right now).
+   key operations.  This might be the basis for 0-RTT, even if the remainder of
+   the connection is protected by a new Diffie-Hellman exchange.
 
 
 # QUIC over DTLS Structure
@@ -271,14 +271,14 @@ The remainder of this section describes how QUIC features are
 modified to fit into a layered design.
 
 
-## Handshake Additions {#additions}
+# Handshake Additions {#additions}
 
 [I-D.tsvwg-quic-protocol] does not describe any connection-level state that
 might be included by a client in a standard 1-RTT handshake to aid in connection
 setup.  However, the following additions are either implemented, or might be.
 
 
-### Source Address Validation {#source-address}
+## Source Address Validation {#source-address}
 
 QUIC implementations describe a source address token.  This is an opaque blob
 that a server provides to clients when they first use a given source address.
@@ -296,10 +296,54 @@ extension/field of a HelloRetryRequest. (Note: the current version of TLS 1.3
 does not include this information.)
 
 
-### Transport Parameter Advertisement
+## Protocol and Version Negotiation
+
+Application Layer Protocol Negotiation (ALPN) [RFC7301] will be used to
+negotiate the version of QUIC that is used.  This is a more verbose mechanism
+than the scheme used in QUIC, but it is also more capable. For example, specific
+QUIC versions could be separately identified: "quic-draft-01", "quic-draft-02",
+and "quic-underdamped-cc".
+
+
+# Connection ID
+
+The QUIC connection identifier serves to identify a connection and to allow a
+server to resume an existing connection from a new client address in case of
+mobility events.  However, this creates an identifier that a passive observer
+[RFC7258] can use to correlate connections.
+
+TLS 1.3 offers connection resumption using pre-shared keys, which also allows a
+client to send 0-RTT application data.  This mode could be used to continue a
+connection rather than rely on a publicly visible correlator.  This only
+requires that servers produce a new ticket on every connection and that clients
+do not resume from the same ticket more than once.
+
+The advantage of relying on 0-RTT modes for mobility events is that this is also
+more robust.  If the new point of attachment results in contacting a new server
+instance - one that lacks the session state - then a fallback is easy.
+
+The main drawback with a clean restart or anything resembling a restart is that
+accumulated state can be lost.  In particular, the state of the HPACK header
+compression table can be quite valuable.  Note that some QUIC implementations
+use part of the connection ID to identify the server that is handling the
+connection, enabling routing to that server and avoiding this sort of problem.
+
+A lightweight state resurrection extension might be used to avoid having to
+recreate any expensive state.
+
+Editor's Note:
+
+: It's not clear how mobility and public reset interact.  If the goal is to
+  allow public reset messages to be sent by on-path entities, then using a
+  connection ID to move a connection to a new path results in any entities on
+  the new path not seeing the start of the connection and the nonce they need to
+  generate the public reset.  A connection restart would avoid this issue.
+
+
+## Transport Parameter Advertisement
 
 A client describes characteristics of the transport protocol it intends to
-conduct with the server in a new `quic_transport_parameters` extension in its
+conduct with the server in a new QUIC-specificextensions in its
 ClientHello.  The server uses this information to determine whether it wants to
 continue the connection, request source address validation, or reject the
 connection.  Having this information unencrypted permits this check to occur
@@ -312,10 +356,98 @@ These parameters are not confidentiality-protected when sent by the client, but
 the server response is protected by the handshake traffic keys.  The entire
 exchange is integrity protected once the handshake completes.
 
-This information is not used by DTLS, but passed to the QUIC protocol as
+This information is not used by DTLS, but can be passed to the QUIC protocol as
 initialization parmeters.
 
-### Congestion Management Before Handshake Completion
+
+### The quic_transport_parameters Extension {#quic_transport_parameters}
+
+The `quic_transport_parameters` extension contains a declarative set of
+parameters that constrain the behaviour of a peer.  This includes the size of
+the stream- and connection-level flow control windows, plus a set of optional
+parameters such as the receive buffer size.
+
+~~~
+   enum {
+       receive_buffer(0),
+       (65535)
+   } QuicTransportParameterType;
+
+   struct {
+       QuicTransportParameterType type;
+       uint32 value;
+   } QuicTransportParameter;
+
+   struct {
+       uint32 connection_initial_window;
+       uint32 stream_initial_window;
+       QuicTransportParameter parameters<0..2^16-1>;
+   } QuicTransportParametersExtension;
+~~~
+
+These values can be updated once the connection has started by sending an
+authenticated -SOMETHING- frame on stream -SOMETHING-.
+
+Editor's Note:
+
+: It would appear that these settings are encapsulated in QUIC crypto messages,
+  though the QUIC documents are unclear on whether a SCFG message can be sent as
+  a top-level message.
+
+The QuicTransportParameterType identifies parameters.  This is taken from a
+single space that is shared by all QUIC versions (and options, see
+{{quic_options}}).
+
+This extension MUST be included if a QUIC version is negotiated.  A server MUST
+NOT negotiate QUIC if this extension is not present.  This could mean that a
+server might consequently send a fatal `no_application_protocol` alert.
+
+Based on the values offered by a client a server MAY use the values in this
+extension to determine whether it wants to continue the connection, request
+source address validation, or reject the connection.  Since this extension is
+initially unencrypted (along with ALPN), the server can use the information
+prior to committing the resources needed to complete a key exchange.
+
+If the server decides to use QUIC, this extension MUST be included in the
+EncryptedExtensions message.
+
+
+### The quic_options Extension {#quic_options}
+
+The `quic_options` extension includes a list of options that can be negotiated
+for a given connection.  These are set during the initial handshake and are
+fixed thereafter.  These options are used to enable or disable optional features
+in the protocol.
+
+~~~
+   enum {
+       (65535)
+   } QuicOption;
+
+   struct {
+       QuicOption options<0..2^8-2>;
+   } QuicOptionsExtension;
+~~~
+
+The set of features that are supported across different versions might vary.  A
+client SHOULD include all options that it is willing to use.  The server MAY
+select any subset of those options that apply to the version of QUIC that it
+selects.  Only those options selected by the server are available for use.
+
+Note:
+
+: This sort of optional behaviour seems like it could be accommodated adequately
+  by defining new versions of QUIC for each experiment.  However, as an evolving
+  protocol, multiple experiments need to be conducted concurrently and
+  continuously, which would overload the ALPN space.  This extension provides a
+  flexible way to regulate which experiments are enabled on a per-connection
+  basis.
+
+If the server decides to use any QUIC options, includes this extension in the
+EncryptedExtensions message.
+
+
+## Congestion Management Before Handshake Completion
 
 In addition to the parameters for the transport, congestion feedback might need
 be exchanged prior to completing a key exchange is complete.
@@ -342,33 +474,12 @@ The use of extensions for the purpose has some potential drawbacks:
 during the handshaking phase.
 
 
-## Record Protection
+# Record Protection
 
-No changes are required to transport frames as DTLS application data.
-
-
-## Protocol and Version Negotiation
-
-Application Layer Protocol Negotiation (ALPN) [RFC7301] will be used to
-negotiate the version of QUIC that is used.  This is a more verbose mechanism
-than the scheme used in QUIC, but it is also more capable. For example, specific
-QUIC versions could be separately identified: "quic-draft-01", "quic-draft-02",
-and "quic-underdamped-cc".
-
-
-## Connection ID
-
-The connection identifier serves to identify a connection and to allow a server
-to resume an existing connection from a new client address in case of mobility
-events.
-
-TLS 1.3 offers connection resumption using pre-shared keys, which might permit a
-client to send 0-RTT application data (Note: this is an open issue in TLS).
-This mode could be used to continue a connection rather than rely on a publicly
-visible correlator.
-
-Alternatively, clients could use a new 0-RTT handshake to continue existing
-connections.
+No major changes are required to transport frames as DTLS application data.  A
+small modification permits the use of a single contiguous sequence number space,
+so that QUIC can reuse DTLS sequence numbers rather than provide redundant
+numbering (see {{seqno}}).
 
 
 ## Entropy Bit
@@ -394,7 +505,7 @@ before TLS 1.3 is completed.  Failing that, new extensions to TLS might be
 considered to negotiate their use.
 
 
-## Sequence Numbers
+## Sequence Numbers {#seqno}
 
 QUIC relies on a single sequence number space for identifying frames.  DTLS does
 not provide a contiguous sequence number space as each change of traffic keys
@@ -407,8 +518,8 @@ guarantees required by TLS.  For TLS, an attacker with access to record
 protection keys might be able to force loss of a number of packets that are
 protected by the next key.
 
-DTLS does not need to abide by this constraint since it does not promise a
-contiguous stream of packets. Attacker-induced loss is not distinguishable from
+DTLS does not rely on the same property, since it does not aim to secure a
+contiguous stream of data.  Attacker-induced loss is not distinguishable from
 other forms of loss.  For this reason, a single sequence number space is
 acceptable.
 
@@ -462,29 +573,31 @@ octet.
 
 Alternative Design:
 
-: If a UDP datagram is restricted to containing a single DTLS record, the length
-  field could be omitted entirely, reducing the unencrypted overhead to as
-  little as 2 octets.  The drawback of this approach is that it could require
-  some additional UDP datagrams during the handshake, since changes to keying
-  material can only happen when a new record is sent.
-
-: In TLS 1.3, these transitions are infrequent aside from during the initial
-  handshake:
-
-    * the client's first flight is only split if 0-RTT is used, in which case 4
-      packets are required
-
-    * the server's first flight contains handshake records with two different
-      traffic keys and optionally application data records and therefore three
-      datagrams
-
-    * the client's second flight contains two different packets
-
-Alternative Design:
-
 : If no multiplexing is necessary, more bits can be spent on the sequence
   number.  This might be possible if DTLS-SRTP 1.3 were modified to include a
   multiplexing header (a shim, as it were).
+
+
+### No Length Option
+
+If each UDP datagram is restricted to containing a single DTLS record, the
+length field could be omitted entirely, reducing the unencrypted overhead to as
+little as 2 octets.  The drawback of this approach is that it could require some
+additional UDP datagrams during the handshake, since changes to keying material
+can only happen when a new record is sent.
+
+In TLS 1.3, these transitions are infrequent aside from during the initial
+handshake:
+
+* the client's first flight is only split if 0-RTT is used, in which case 4
+  packets are required (this might be fewer with some proposed key schedule
+  changes)
+
+* the server's first flight contains handshake records with two different
+  traffic keys and optionally application data records and therefore three
+  datagrams
+
+* the client's second flight contains two different packets
 
 
 # Security Considerations
@@ -504,11 +617,14 @@ in response to unauthenticated rejections or network errors.
 
 # IANA Considerations
 
-This document has no IANA actions.
+This document has no IANA actions.  Yet.
 
 -- back
 
 # Acknowledgments
 
 Christian Huitema's knowledge of QUIC is far better than my own.  This would be
-even more inaccurate if not for his assistance.
+even more inaccurate and useless if not for his assistance.  This document has
+variously benefited from a long series of discussions with Ryan Hamilton, Jana
+Iyengar, Adam Langley, Roberto Peon, Ian Swett, and likely many others who are
+merely forgotten by a faulty meat computer.
