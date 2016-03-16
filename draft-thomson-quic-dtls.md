@@ -306,41 +306,6 @@ QUIC versions could be separately identified: "quic-draft-01", "quic-draft-02",
 and "quic-underdamped-cc".
 
 
-# Connection ID
-
-The QUIC connection identifier serves to identify a connection and to allow a
-server to resume an existing connection from a new client address in case of
-mobility events.  However, this creates an identifier that a passive observer
-[RFC7258] can use to correlate connections.
-
-TLS 1.3 offers connection resumption using pre-shared keys, which also allows a
-client to send 0-RTT application data.  This mode could be used to continue a
-connection rather than rely on a publicly visible correlator.  This only
-requires that servers produce a new ticket on every connection and that clients
-do not resume from the same ticket more than once.
-
-The advantage of relying on 0-RTT modes for mobility events is that this is also
-more robust.  If the new point of attachment results in contacting a new server
-instance - one that lacks the session state - then a fallback is easy.
-
-The main drawback with a clean restart or anything resembling a restart is that
-accumulated state can be lost.  In particular, the state of the HPACK header
-compression table can be quite valuable.  Note that some QUIC implementations
-use part of the connection ID to identify the server that is handling the
-connection, enabling routing to that server and avoiding this sort of problem.
-
-A lightweight state resurrection extension might be used to avoid having to
-recreate any expensive state.
-
-Editor's Note:
-
-: It's not clear how mobility and public reset interact.  If the goal is to
-  allow public reset messages to be sent by on-path entities, then using a
-  connection ID to move a connection to a new path results in any entities on
-  the new path not seeing the start of the connection and the nonce they need to
-  generate the public reset.  A connection restart would avoid this issue.
-
-
 ## QUIC-Specific Extensions {#quic-extensions}
 
 A client describes characteristics of the transport protocol it intends to
@@ -600,6 +565,41 @@ handshake:
   datagrams
 
 * the client's second flight contains two different packets
+
+
+## Connection ID
+
+The QUIC connection identifier serves to identify a connection and to allow a
+server to resume an existing connection from a new client address in case of
+mobility events.  However, this creates an identifier that a passive observer
+[RFC7258] can use to correlate connections.
+
+TLS 1.3 offers connection resumption using pre-shared keys, which also allows a
+client to send 0-RTT application data.  This mode could be used to continue a
+connection rather than rely on a publicly visible correlator.  This only
+requires that servers produce a new ticket on every connection and that clients
+do not resume from the same ticket more than once.
+
+The advantage of relying on 0-RTT modes for mobility events is that this is also
+more robust.  If the new point of attachment results in contacting a new server
+instance - one that lacks the session state - then a fallback is easy.
+
+The main drawback with a clean restart or anything resembling a restart is that
+accumulated state can be lost.  In particular, the state of the HPACK header
+compression table can be quite valuable.  Note that some QUIC implementations
+use part of the connection ID to identify the server that is handling the
+connection, enabling routing to that server and avoiding this sort of problem.
+
+A lightweight state resurrection extension might be used to avoid having to
+recreate any expensive state.
+
+Editor's Note:
+
+: It's not clear how mobility and public reset interact.  If the goal is to
+  allow public reset messages to be sent by on-path entities, then using a
+  connection ID to move a connection to a new path results in any entities on
+  the new path not seeing the start of the connection and the nonce they need to
+  generate the public reset.  A connection restart would avoid this issue.
 
 
 # Security Considerations
