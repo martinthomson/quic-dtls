@@ -25,6 +25,7 @@ normative:
 
 informative:
   RFC7540:
+  RFC7258:
   RFC7230:
   RFC6347:
   RFC5764:
@@ -340,14 +341,14 @@ Editor's Note:
   generate the public reset.  A connection restart would avoid this issue.
 
 
-## Transport Parameter Advertisement
+## QUIC-Specific Extensions {#quic-extensions}
 
 A client describes characteristics of the transport protocol it intends to
-conduct with the server in a new QUIC-specificextensions in its
-ClientHello.  The server uses this information to determine whether it wants to
-continue the connection, request source address validation, or reject the
-connection.  Having this information unencrypted permits this check to occur
-prior to committing the resources needed to complete the initial key exchange.
+conduct with the server in a new QUIC-specific extensions in its ClientHello.
+The server uses this information to determine whether it wants to continue the
+connection, request source address validation, or reject the connection.  Having
+this information unencrypted permits this check to occur prior to committing the
+resources needed to complete the initial key exchange.
 
 If the server decides to complete the connection, it generates a corresponding
 response and includes it in the EncryptedExtensions message.
@@ -381,6 +382,7 @@ parameters such as the receive buffer size.
    struct {
        uint32 connection_initial_window;
        uint32 stream_initial_window;
+       uint32 implicit_shutdown_timeout;
        QuicTransportParameter parameters<0..2^16-1>;
    } QuicTransportParametersExtension;
 ~~~
