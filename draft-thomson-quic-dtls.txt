@@ -69,25 +69,25 @@ Table of Contents
    5.  Handshake Additions . . . . . . . . . . . . . . . . . . . . .   7
      5.1.  Source Address Validation . . . . . . . . . . . . . . . .   7
      5.2.  Protocol and Version Negotiation  . . . . . . . . . . . .   8
-   6.  Connection ID . . . . . . . . . . . . . . . . . . . . . . . .   8
-     6.1.  QUIC-Specific Extensions  . . . . . . . . . . . . . . . .   9
-       6.1.1.  The quic_transport_parameters Extension . . . . . . .   9
-       6.1.2.  The quic_options Extension  . . . . . . . . . . . . .  10
-     6.2.  Congestion Management Before Handshake Completion . . . .  11
-   7.  Record Protection . . . . . . . . . . . . . . . . . . . . . .  11
-     7.1.  Entropy Bit . . . . . . . . . . . . . . . . . . . . . . .  12
-     7.2.  Forward Error Control (FEC) . . . . . . . . . . . . . . .  12
-   8.  Modifications to DTLS . . . . . . . . . . . . . . . . . . . .  12
-     8.1.  Sequence Numbers  . . . . . . . . . . . . . . . . . . . .  12
-     8.2.  Handshake Message Loss Recovery . . . . . . . . . . . . .  12
-     8.3.  DTLS Datagram Header  . . . . . . . . . . . . . . . . . .  13
-       8.3.1.  No Length Option  . . . . . . . . . . . . . . . . . .  14
-   9.  Security Considerations . . . . . . . . . . . . . . . . . . .  14
-   10. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  14
-   11. Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  15
-   12. References  . . . . . . . . . . . . . . . . . . . . . . . . .  15
-     12.1.  Normative References . . . . . . . . . . . . . . . . . .  15
-     12.2.  Informative References . . . . . . . . . . . . . . . . .  15
+     5.3.  QUIC-Specific Extensions  . . . . . . . . . . . . . . . .   8
+       5.3.1.  The quic_transport_parameters Extension . . . . . . .   8
+       5.3.2.  The quic_options Extension  . . . . . . . . . . . . .   9
+     5.4.  Congestion Management Before Handshake Completion . . . .  10
+   6.  Record Protection . . . . . . . . . . . . . . . . . . . . . .  11
+     6.1.  Entropy Bit . . . . . . . . . . . . . . . . . . . . . . .  11
+     6.2.  Forward Error Control (FEC) . . . . . . . . . . . . . . .  11
+   7.  Modifications to DTLS . . . . . . . . . . . . . . . . . . . .  11
+     7.1.  Sequence Numbers  . . . . . . . . . . . . . . . . . . . .  11
+     7.2.  Handshake Message Loss Recovery . . . . . . . . . . . . .  12
+     7.3.  DTLS Datagram Header  . . . . . . . . . . . . . . . . . .  12
+       7.3.1.  No Length Option  . . . . . . . . . . . . . . . . . .  13
+     7.4.  Connection ID . . . . . . . . . . . . . . . . . . . . . .  13
+   8.  Security Considerations . . . . . . . . . . . . . . . . . . .  14
+   9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  14
+   10. Acknowledgments . . . . . . . . . . . . . . . . . . . . . . .  15
+   11. References  . . . . . . . . . . . . . . . . . . . . . . . . .  15
+     11.1.  Normative References . . . . . . . . . . . . . . . . . .  15
+     11.2.  Informative References . . . . . . . . . . . . . . . . .  15
    Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  16
 
 1.  Introduction
@@ -301,7 +301,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
    In this design QUIC frames are exchanged as DTLS application data.
    FEC and public reset are provided as minimal protocols that are
    multiplexed with DTLS, using a different value for the first octet of
-   the UDP payload (see Section 8.3 for a sample design).
+   the UDP payload (see Section 7.3 for a sample design).
 
    The DTLS handshake is the first data that is exchanged on a
    connection, though additional QUIC-specific data might be included,
@@ -407,53 +407,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
    identified: "quic-draft-01", "quic-draft-02", and "quic-underdamped-
    cc".
 
-6.  Connection ID
-
-   The QUIC connection identifier serves to identify a connection and to
-   allow a server to resume an existing connection from a new client
-   address in case of mobility events.  However, this creates an
-   identifier that a passive observer [RFC7258] can use to correlate
-   connections.
-
-   TLS 1.3 offers connection resumption using pre-shared keys, which
-   also allows a client to send 0-RTT application data.  This mode could
-   be used to continue a connection rather than rely on a publicly
-   visible correlator.  This only requires that servers produce a new
-   ticket on every connection and that clients do not resume from the
-   same ticket more than once.
-
-   The advantage of relying on 0-RTT modes for mobility events is that
-   this is also more robust.  If the new point of attachment results in
-   contacting a new server instance - one that lacks the session state -
-   then a fallback is easy.
-
-   The main drawback with a clean restart or anything resembling a
-   restart is that accumulated state can be lost.  In particular, the
-   state of the HPACK header compression table can be quite valuable.
-   Note that some QUIC implementations use part of the connection ID to
-   identify the server that is handling the connection, enabling routing
-   to that server and avoiding this sort of problem.
-
-   A lightweight state resurrection extension might be used to avoid
-   having to recreate any expensive state.
-
-   Editor's Note:  It's not clear how mobility and public reset
-      interact.  If the goal is to allow public reset messages to be
-      sent by on-path entities, then using a connection ID to move a
-      connection to a new path results in any entities on the new path
-      not seeing the start of the connection and the nonce they need to
-
-
-
-Thomson                Expires September 17, 2016               [Page 8]
-
-Internet-Draft               QUIC over DTLS                   March 2016
-
-
-      generate the public reset.  A connection restart would avoid this
-      issue.
-
-6.1.  QUIC-Specific Extensions
+5.3.  QUIC-Specific Extensions
 
    A client describes characteristics of the transport protocol it
    intends to conduct with the server in a new QUIC-specific extensions
@@ -475,12 +429,26 @@ Internet-Draft               QUIC over DTLS                   March 2016
    This information is not used by DTLS, but can be passed to the QUIC
    protocol as initialization parmeters.
 
-6.1.1.  The quic_transport_parameters Extension
+5.3.1.  The quic_transport_parameters Extension
 
    The "quic_transport_parameters" extension contains a declarative set
    of parameters that constrain the behaviour of a peer.  This includes
    the size of the stream- and connection-level flow control windows,
    plus a set of optional parameters such as the receive buffer size.
+
+
+
+
+
+
+
+
+
+
+Thomson                Expires September 17, 2016               [Page 8]
+
+Internet-Draft               QUIC over DTLS                   March 2016
+
 
       enum {
           receive_buffer(0),
@@ -499,13 +467,6 @@ Internet-Draft               QUIC over DTLS                   March 2016
           QuicTransportParameter parameters<0..2^16-1>;
       } QuicTransportParametersExtension;
 
-
-
-Thomson                Expires September 17, 2016               [Page 9]
-
-Internet-Draft               QUIC over DTLS                   March 2016
-
-
    These values can be updated once the connection has started by
    sending an authenticated -SOMETHING- frame on stream -SOMETHING-.
 
@@ -515,7 +476,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
 
    The QuicTransportParameterType identifies parameters.  This is taken
    from a single space that is shared by all QUIC versions (and options,
-   see Section 6.1.2).
+   see Section 5.3.2).
 
    This extension MUST be included if a QUIC version is negotiated.  A
    server MUST NOT negotiate QUIC if this extension is not present.
@@ -532,10 +493,19 @@ Internet-Draft               QUIC over DTLS                   March 2016
    If the server decides to use QUIC, this extension MUST be included in
    the EncryptedExtensions message.
 
-6.1.2.  The quic_options Extension
+5.3.2.  The quic_options Extension
 
    The "quic_options" extension includes a list of options that can be
    negotiated for a given connection.  These are set during the initial
+
+
+
+
+Thomson                Expires September 17, 2016               [Page 9]
+
+Internet-Draft               QUIC over DTLS                   March 2016
+
+
    handshake and are fixed thereafter.  These options are used to enable
    or disable optional features in the protocol.
 
@@ -553,15 +523,6 @@ Internet-Draft               QUIC over DTLS                   March 2016
    to the version of QUIC that it selects.  Only those options selected
    by the server are available for use.
 
-
-
-
-
-Thomson                Expires September 17, 2016              [Page 10]
-
-Internet-Draft               QUIC over DTLS                   March 2016
-
-
    Note:  This sort of optional behaviour seems like it could be
       accommodated adequately by defining new versions of QUIC for each
       experiment.  However, as an evolving protocol, multiple
@@ -573,7 +534,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
    If the server decides to use any QUIC options, includes this
    extension in the EncryptedExtensions message.
 
-6.2.  Congestion Management Before Handshake Completion
+5.4.  Congestion Management Before Handshake Completion
 
    In addition to the parameters for the transport, congestion feedback
    might need be exchanged prior to completing a key exchange is
@@ -592,44 +553,43 @@ Internet-Draft               QUIC over DTLS                   March 2016
       that the handshake encryption keys will likely differ if
       extensions are modified, though this is not a strong guarantee.)
 
+
+
+
+
+Thomson                Expires September 17, 2016              [Page 10]
+
+Internet-Draft               QUIC over DTLS                   March 2016
+
+
    o  Extensions are authenticated, and therefore cannot contain updated
       information if they need to be retransmitted.
 
    o  Extensions that appear prior to the EncryptedExtensions do not
       have any confidentiality protection.
 
-   Section 8.2 identifies the related issue of loss feedback mechanisms
+   Section 7.2 identifies the related issue of loss feedback mechanisms
    during the handshaking phase.
 
-7.  Record Protection
+6.  Record Protection
 
    No major changes are required to transport frames as DTLS application
    data.  A small modification permits the use of a single contiguous
    sequence number space, so that QUIC can reuse DTLS sequence numbers
-   rather than provide redundant numbering (see Section 8.1).
+   rather than provide redundant numbering (see Section 7.1).
 
-
-
-
-
-
-Thomson                Expires September 17, 2016              [Page 11]
-
-Internet-Draft               QUIC over DTLS                   March 2016
-
-
-7.1.  Entropy Bit
+6.1.  Entropy Bit
 
    This can be removed, and is (apparently) already have been removed
    from current implementations.
 
-7.2.  Forward Error Control (FEC)
+6.2.  Forward Error Control (FEC)
 
    FEC can be covered by encryption and forms part of the framing layer.
    The current protocol has some external parts, but these can be
    encrypted.
 
-8.  Modifications to DTLS
+7.  Modifications to DTLS
 
    DTLS 1.3 does not need substantial modifications in order to support
    the more critical features of QUIC.  However, some additional changes
@@ -639,7 +599,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
    integrated before TLS 1.3 is completed.  Failing that, new extensions
    to TLS might be considered to negotiate their use.
 
-8.1.  Sequence Numbers
+7.1.  Sequence Numbers
 
    QUIC relies on a single sequence number space for identifying frames.
    DTLS does not provide a contiguous sequence number space as each
@@ -649,6 +609,15 @@ Internet-Draft               QUIC over DTLS                   March 2016
 
    The only reason for the separate sequence number space is to support
    the guarantees required by TLS.  For TLS, an attacker with access to
+
+
+
+
+Thomson                Expires September 17, 2016              [Page 11]
+
+Internet-Draft               QUIC over DTLS                   March 2016
+
+
    record protection keys might be able to force loss of a number of
    packets that are protected by the next key.
 
@@ -657,7 +626,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
    distinguishable from other forms of loss.  For this reason, a single
    sequence number space is acceptable.
 
-8.2.  Handshake Message Loss Recovery
+7.2.  Handshake Message Loss Recovery
 
    DTLS has a somewhat simplistic retransmission scheme for its
    handshake datagrams.  An entire flight of handshake messages is sent
@@ -667,14 +636,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
    complete and accurate feedback mechanism would be valuable in
    reducing the performance of the handshake.
 
-
-
-Thomson                Expires September 17, 2016              [Page 12]
-
-Internet-Draft               QUIC over DTLS                   March 2016
-
-
-8.3.  DTLS Datagram Header
+7.3.  DTLS Datagram Header
 
    DTLS 1.2 [RFC6347] has a rather large per-packet overhead.  This
    overhead includes a content type (1 octet), protocol version (2
@@ -704,6 +666,14 @@ Internet-Draft               QUIC over DTLS                   March 2016
 
                           Figure 5: Packet Header
 
+
+
+
+Thomson                Expires September 17, 2016              [Page 12]
+
+Internet-Draft               QUIC over DTLS                   March 2016
+
+
    The second set of zero bits could be used for an expanded sequence
    number space.  However, if there is any expectation of being able to
    use datagrams that are more than 4096 packets out of sequence, then
@@ -719,18 +689,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
       SRTP 1.3 were modified to include a multiplexing header (a shim,
       as it were).
 
-
-
-
-
-
-
-Thomson                Expires September 17, 2016              [Page 13]
-
-Internet-Draft               QUIC over DTLS                   March 2016
-
-
-8.3.1.  No Length Option
+7.3.1.  No Length Option
 
    If each UDP datagram is restricted to containing a single DTLS
    record, the length field could be omitted entirely, reducing the
@@ -752,7 +711,53 @@ Internet-Draft               QUIC over DTLS                   March 2016
 
    o  the client's second flight contains two different packets
 
-9.  Security Considerations
+7.4.  Connection ID
+
+   The QUIC connection identifier serves to identify a connection and to
+   allow a server to resume an existing connection from a new client
+   address in case of mobility events.  However, this creates an
+   identifier that a passive observer [RFC7258] can use to correlate
+   connections.
+
+   TLS 1.3 offers connection resumption using pre-shared keys, which
+   also allows a client to send 0-RTT application data.  This mode could
+   be used to continue a connection rather than rely on a publicly
+
+
+
+Thomson                Expires September 17, 2016              [Page 13]
+
+Internet-Draft               QUIC over DTLS                   March 2016
+
+
+   visible correlator.  This only requires that servers produce a new
+   ticket on every connection and that clients do not resume from the
+   same ticket more than once.
+
+   The advantage of relying on 0-RTT modes for mobility events is that
+   this is also more robust.  If the new point of attachment results in
+   contacting a new server instance - one that lacks the session state -
+   then a fallback is easy.
+
+   The main drawback with a clean restart or anything resembling a
+   restart is that accumulated state can be lost.  In particular, the
+   state of the HPACK header compression table can be quite valuable.
+   Note that some QUIC implementations use part of the connection ID to
+   identify the server that is handling the connection, enabling routing
+   to that server and avoiding this sort of problem.
+
+   A lightweight state resurrection extension might be used to avoid
+   having to recreate any expensive state.
+
+   Editor's Note:  It's not clear how mobility and public reset
+      interact.  If the goal is to allow public reset messages to be
+      sent by on-path entities, then using a connection ID to move a
+      connection to a new path results in any entities on the new path
+      not seeing the start of the connection and the nonce they need to
+      generate the public reset.  A connection restart would avoid this
+      issue.
+
+8.  Security Considerations
 
    Including data outside of the DTLS protection layer exposes endpoints
    to all sorts of intermediary-initiated shenanigans.
@@ -768,16 +773,11 @@ Internet-Draft               QUIC over DTLS                   March 2016
    its contents in response to unauthenticated rejections or network
    errors.
 
-10.  IANA Considerations
+9.  IANA Considerations
 
    This document has no IANA actions.  Yet.
 
    - back
-
-
-
-
-
 
 
 
@@ -786,7 +786,7 @@ Thomson                Expires September 17, 2016              [Page 14]
 Internet-Draft               QUIC over DTLS                   March 2016
 
 
-11.  Acknowledgments
+10.  Acknowledgments
 
    Christian Huitema's knowledge of QUIC is far better than my own.
    This would be even more inaccurate and useless if not for his
@@ -795,9 +795,9 @@ Internet-Draft               QUIC over DTLS                   March 2016
    Roberto Peon, Ian Swett, and likely many others who are merely
    forgotten by a faulty meat computer.
 
-12.  References
+11.  References
 
-12.1.  Normative References
+11.1.  Normative References
 
    [I-D.ietf-tls-tls13]
               Rescorla, E., "The Transport Layer Security (TLS) Protocol
@@ -820,7 +820,7 @@ Internet-Draft               QUIC over DTLS                   March 2016
               Negotiation Extension", RFC 7301, DOI 10.17487/RFC7301,
               July 2014, <http://www.rfc-editor.org/info/rfc7301>.
 
-12.2.  Informative References
+11.2.  Informative References
 
    [RFC0793]  Postel, J., "Transmission Control Protocol", STD 7,
               RFC 793, DOI 10.17487/RFC0793, September 1981,

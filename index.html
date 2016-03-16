@@ -277,25 +277,25 @@ li, p {
 <link href="#rfc.section.5" rel="Chapter" title="5 Handshake Additions"/>
 <link href="#rfc.section.5.1" rel="Chapter" title="5.1 Source Address Validation"/>
 <link href="#rfc.section.5.2" rel="Chapter" title="5.2 Protocol and Version Negotiation"/>
-<link href="#rfc.section.6" rel="Chapter" title="6 Connection ID"/>
-<link href="#rfc.section.6.1" rel="Chapter" title="6.1 QUIC-Specific Extensions"/>
-<link href="#rfc.section.6.1.1" rel="Chapter" title="6.1.1 The quic_transport_parameters Extension"/>
-<link href="#rfc.section.6.1.2" rel="Chapter" title="6.1.2 The quic_options Extension"/>
-<link href="#rfc.section.6.2" rel="Chapter" title="6.2 Congestion Management Before Handshake Completion"/>
-<link href="#rfc.section.7" rel="Chapter" title="7 Record Protection"/>
-<link href="#rfc.section.7.1" rel="Chapter" title="7.1 Entropy Bit"/>
-<link href="#rfc.section.7.2" rel="Chapter" title="7.2 Forward Error Control (FEC)"/>
-<link href="#rfc.section.8" rel="Chapter" title="8 Modifications to DTLS"/>
-<link href="#rfc.section.8.1" rel="Chapter" title="8.1 Sequence Numbers"/>
-<link href="#rfc.section.8.2" rel="Chapter" title="8.2 Handshake Message Loss Recovery"/>
-<link href="#rfc.section.8.3" rel="Chapter" title="8.3 DTLS Datagram Header"/>
-<link href="#rfc.section.8.3.1" rel="Chapter" title="8.3.1 No Length Option"/>
-<link href="#rfc.section.9" rel="Chapter" title="9 Security Considerations"/>
-<link href="#rfc.section.10" rel="Chapter" title="10 IANA Considerations"/>
-<link href="#rfc.section.11" rel="Chapter" title="11 Acknowledgments"/>
-<link href="#rfc.references" rel="Chapter" title="12 References"/>
-<link href="#rfc.references.1" rel="Chapter" title="12.1 Normative References"/>
-<link href="#rfc.references.2" rel="Chapter" title="12.2 Informative References"/>
+<link href="#rfc.section.5.3" rel="Chapter" title="5.3 QUIC-Specific Extensions"/>
+<link href="#rfc.section.5.3.1" rel="Chapter" title="5.3.1 The quic_transport_parameters Extension"/>
+<link href="#rfc.section.5.3.2" rel="Chapter" title="5.3.2 The quic_options Extension"/>
+<link href="#rfc.section.5.4" rel="Chapter" title="5.4 Congestion Management Before Handshake Completion"/>
+<link href="#rfc.section.6" rel="Chapter" title="6 Record Protection"/>
+<link href="#rfc.section.6.1" rel="Chapter" title="6.1 Entropy Bit"/>
+<link href="#rfc.section.6.2" rel="Chapter" title="6.2 Forward Error Control (FEC)"/>
+<link href="#rfc.section.7" rel="Chapter" title="7 Modifications to DTLS"/>
+<link href="#rfc.section.7.1" rel="Chapter" title="7.1 Sequence Numbers"/>
+<link href="#rfc.section.7.2" rel="Chapter" title="7.2 Handshake Message Loss Recovery"/>
+<link href="#rfc.section.7.3" rel="Chapter" title="7.3 DTLS Datagram Header"/>
+<link href="#rfc.section.7.3.1" rel="Chapter" title="7.3.1 No Length Option"/>
+<link href="#rfc.section.7.4" rel="Chapter" title="7.4 Connection ID"/>
+<link href="#rfc.section.8" rel="Chapter" title="8 Security Considerations"/>
+<link href="#rfc.section.9" rel="Chapter" title="9 IANA Considerations"/>
+<link href="#rfc.section.10" rel="Chapter" title="10 Acknowledgments"/>
+<link href="#rfc.references" rel="Chapter" title="11 References"/>
+<link href="#rfc.references.1" rel="Chapter" title="11.1 Normative References"/>
+<link href="#rfc.references.2" rel="Chapter" title="11.2 Informative References"/>
 <link href="#rfc.authors" rel="Chapter"/>
 
 
@@ -370,25 +370,25 @@ li, p {
 <li>5.   <a href="#rfc.section.5">Handshake Additions</a></li>
 <ul><li>5.1.   <a href="#rfc.section.5.1">Source Address Validation</a></li>
 <li>5.2.   <a href="#rfc.section.5.2">Protocol and Version Negotiation</a></li>
-</ul><li>6.   <a href="#rfc.section.6">Connection ID</a></li>
-<ul><li>6.1.   <a href="#rfc.section.6.1">QUIC-Specific Extensions</a></li>
-<ul><li>6.1.1.   <a href="#rfc.section.6.1.1">The quic_transport_parameters Extension</a></li>
-<li>6.1.2.   <a href="#rfc.section.6.1.2">The quic_options Extension</a></li>
-</ul><li>6.2.   <a href="#rfc.section.6.2">Congestion Management Before Handshake Completion</a></li>
-</ul><li>7.   <a href="#rfc.section.7">Record Protection</a></li>
-<ul><li>7.1.   <a href="#rfc.section.7.1">Entropy Bit</a></li>
-<li>7.2.   <a href="#rfc.section.7.2">Forward Error Control (FEC)</a></li>
-</ul><li>8.   <a href="#rfc.section.8">Modifications to DTLS</a></li>
-<ul><li>8.1.   <a href="#rfc.section.8.1">Sequence Numbers</a></li>
-<li>8.2.   <a href="#rfc.section.8.2">Handshake Message Loss Recovery</a></li>
-<li>8.3.   <a href="#rfc.section.8.3">DTLS Datagram Header</a></li>
-<ul><li>8.3.1.   <a href="#rfc.section.8.3.1">No Length Option</a></li>
-</ul></ul><li>9.   <a href="#rfc.section.9">Security Considerations</a></li>
-<li>10.   <a href="#rfc.section.10">IANA Considerations</a></li>
-<li>11.   <a href="#rfc.section.11">Acknowledgments</a></li>
-<li>12.   <a href="#rfc.references">References</a></li>
-<ul><li>12.1.   <a href="#rfc.references.1">Normative References</a></li>
-<li>12.2.   <a href="#rfc.references.2">Informative References</a></li>
+<li>5.3.   <a href="#rfc.section.5.3">QUIC-Specific Extensions</a></li>
+<ul><li>5.3.1.   <a href="#rfc.section.5.3.1">The quic_transport_parameters Extension</a></li>
+<li>5.3.2.   <a href="#rfc.section.5.3.2">The quic_options Extension</a></li>
+</ul><li>5.4.   <a href="#rfc.section.5.4">Congestion Management Before Handshake Completion</a></li>
+</ul><li>6.   <a href="#rfc.section.6">Record Protection</a></li>
+<ul><li>6.1.   <a href="#rfc.section.6.1">Entropy Bit</a></li>
+<li>6.2.   <a href="#rfc.section.6.2">Forward Error Control (FEC)</a></li>
+</ul><li>7.   <a href="#rfc.section.7">Modifications to DTLS</a></li>
+<ul><li>7.1.   <a href="#rfc.section.7.1">Sequence Numbers</a></li>
+<li>7.2.   <a href="#rfc.section.7.2">Handshake Message Loss Recovery</a></li>
+<li>7.3.   <a href="#rfc.section.7.3">DTLS Datagram Header</a></li>
+<ul><li>7.3.1.   <a href="#rfc.section.7.3.1">No Length Option</a></li>
+</ul><li>7.4.   <a href="#rfc.section.7.4">Connection ID</a></li>
+</ul><li>8.   <a href="#rfc.section.8">Security Considerations</a></li>
+<li>9.   <a href="#rfc.section.9">IANA Considerations</a></li>
+<li>10.   <a href="#rfc.section.10">Acknowledgments</a></li>
+<li>11.   <a href="#rfc.references">References</a></li>
+<ul><li>11.1.   <a href="#rfc.references.1">Normative References</a></li>
+<li>11.2.   <a href="#rfc.references.2">Informative References</a></li>
 </ul><li><a href="#rfc.authors">Author's Address</a></li>
 
 
@@ -501,7 +501,7 @@ li, p {
    +---------------------------------+
 </pre>
 <p class="figure">Figure 3: QUIC over DTLS</p>
-<p id="rfc.section.3.p.2">In this design QUIC frames are exchanged as DTLS application data.  FEC and public reset are provided as minimal protocols that are multiplexed with DTLS, using a different value for the first octet of the UDP payload (see <a href="#packet">Section 8.3</a> for a sample design).</p>
+<p id="rfc.section.3.p.2">In this design QUIC frames are exchanged as DTLS application data.  FEC and public reset are provided as minimal protocols that are multiplexed with DTLS, using a different value for the first octet of the UDP payload (see <a href="#packet">Section 7.3</a> for a sample design).</p>
 <p id="rfc.section.3.p.3">The DTLS handshake is the first data that is exchanged on a connection, though additional QUIC-specific data might be included, see <a href="#additions">Section 5</a>.</p>
 <p/>
 
@@ -544,25 +544,13 @@ li, p {
 <p id="rfc.section.5.1.p.3">A server that is under load might include the same information in the cookie extension/field of a HelloRetryRequest. (Note: the current version of TLS 1.3 does not include this information.)</p>
 <h2 id="rfc.section.5.2"><a href="#rfc.section.5.2">5.2.</a> <a href="#protocol-and-version-negotiation" id="protocol-and-version-negotiation">Protocol and Version Negotiation</a></h2>
 <p id="rfc.section.5.2.p.1">Application Layer Protocol Negotiation (ALPN) <a href="#RFC7301">[RFC7301]</a> will be used to negotiate the version of QUIC that is used.  This is a more verbose mechanism than the scheme used in QUIC, but it is also more capable. For example, specific QUIC versions could be separately identified: &#8220;quic-draft-01&#8221;, &#8220;quic-draft-02&#8221;, and &#8220;quic-underdamped-cc&#8221;.</p>
-<h1 id="rfc.section.6"><a href="#rfc.section.6">6.</a> <a href="#connection-id" id="connection-id">Connection ID</a></h1>
-<p id="rfc.section.6.p.1">The QUIC connection identifier serves to identify a connection and to allow a server to resume an existing connection from a new client address in case of mobility events.  However, this creates an identifier that a passive observer <a href="#RFC7258">[RFC7258]</a> can use to correlate connections.</p>
-<p id="rfc.section.6.p.2">TLS 1.3 offers connection resumption using pre-shared keys, which also allows a client to send 0-RTT application data.  This mode could be used to continue a connection rather than rely on a publicly visible correlator.  This only requires that servers produce a new ticket on every connection and that clients do not resume from the same ticket more than once.</p>
-<p id="rfc.section.6.p.3">The advantage of relying on 0-RTT modes for mobility events is that this is also more robust.  If the new point of attachment results in contacting a new server instance - one that lacks the session state - then a fallback is easy.</p>
-<p id="rfc.section.6.p.4">The main drawback with a clean restart or anything resembling a restart is that accumulated state can be lost.  In particular, the state of the HPACK header compression table can be quite valuable.  Note that some QUIC implementations use part of the connection ID to identify the server that is handling the connection, enabling routing to that server and avoiding this sort of problem.</p>
-<p id="rfc.section.6.p.5">A lightweight state resurrection extension might be used to avoid having to recreate any expensive state.</p>
-<p/>
-
-<dl>
-  <dt>Editor&#8217;s Note:</dt>
-  <dd style="margin-left: 8">It&#8217;s not clear how mobility and public reset interact.  If the goal is to allow public reset messages to be sent by on-path entities, then using a connection ID to move a connection to a new path results in any entities on the new path not seeing the start of the connection and the nonce they need to generate the public reset.  A connection restart would avoid this issue.</dd>
-</dl>
-<h2 id="rfc.section.6.1"><a href="#rfc.section.6.1">6.1.</a> <a href="#quic-extensions" id="quic-extensions">QUIC-Specific Extensions</a></h2>
-<p id="rfc.section.6.1.p.1">A client describes characteristics of the transport protocol it intends to conduct with the server in a new QUIC-specific extensions in its ClientHello.  The server uses this information to determine whether it wants to continue the connection, request source address validation, or reject the connection.  Having this information unencrypted permits this check to occur prior to committing the resources needed to complete the initial key exchange.</p>
-<p id="rfc.section.6.1.p.2">If the server decides to complete the connection, it generates a corresponding response and includes it in the EncryptedExtensions message.</p>
-<p id="rfc.section.6.1.p.3">These parameters are not confidentiality-protected when sent by the client, but the server response is protected by the handshake traffic keys.  The entire exchange is integrity protected once the handshake completes.</p>
-<p id="rfc.section.6.1.p.4">This information is not used by DTLS, but can be passed to the QUIC protocol as initialization parmeters.</p>
-<h3 id="rfc.section.6.1.1"><a href="#rfc.section.6.1.1">6.1.1.</a> <a href="#quic_transport_parameters" id="quic_transport_parameters">The quic_transport_parameters Extension</a></h3>
-<p id="rfc.section.6.1.1.p.1">The <samp>quic_transport_parameters</samp> extension contains a declarative set of parameters that constrain the behaviour of a peer.  This includes the size of the stream- and connection-level flow control windows, plus a set of optional parameters such as the receive buffer size.</p>
+<h2 id="rfc.section.5.3"><a href="#rfc.section.5.3">5.3.</a> <a href="#quic-extensions" id="quic-extensions">QUIC-Specific Extensions</a></h2>
+<p id="rfc.section.5.3.p.1">A client describes characteristics of the transport protocol it intends to conduct with the server in a new QUIC-specific extensions in its ClientHello.  The server uses this information to determine whether it wants to continue the connection, request source address validation, or reject the connection.  Having this information unencrypted permits this check to occur prior to committing the resources needed to complete the initial key exchange.</p>
+<p id="rfc.section.5.3.p.2">If the server decides to complete the connection, it generates a corresponding response and includes it in the EncryptedExtensions message.</p>
+<p id="rfc.section.5.3.p.3">These parameters are not confidentiality-protected when sent by the client, but the server response is protected by the handshake traffic keys.  The entire exchange is integrity protected once the handshake completes.</p>
+<p id="rfc.section.5.3.p.4">This information is not used by DTLS, but can be passed to the QUIC protocol as initialization parmeters.</p>
+<h3 id="rfc.section.5.3.1"><a href="#rfc.section.5.3.1">5.3.1.</a> <a href="#quic_transport_parameters" id="quic_transport_parameters">The quic_transport_parameters Extension</a></h3>
+<p id="rfc.section.5.3.1.p.1">The <samp>quic_transport_parameters</samp> extension contains a declarative set of parameters that constrain the behaviour of a peer.  This includes the size of the stream- and connection-level flow control windows, plus a set of optional parameters such as the receive buffer size.</p>
 <pre>
    enum {
        receive_buffer(0),
@@ -581,19 +569,19 @@ li, p {
        QuicTransportParameter parameters&lt;0..2^16-1&gt;;
    } QuicTransportParametersExtension;
 </pre>
-<p id="rfc.section.6.1.1.p.2">These values can be updated once the connection has started by sending an authenticated -SOMETHING- frame on stream -SOMETHING-.</p>
+<p id="rfc.section.5.3.1.p.2">These values can be updated once the connection has started by sending an authenticated -SOMETHING- frame on stream -SOMETHING-.</p>
 <p/>
 
 <dl>
   <dt>Editor&#8217;s Note:</dt>
   <dd style="margin-left: 8">It would appear that these settings are encapsulated in QUIC crypto messages, though the QUIC documents are unclear on whether a SCFG message can be sent as a top-level message.</dd>
 </dl>
-<p id="rfc.section.6.1.1.p.4">The QuicTransportParameterType identifies parameters.  This is taken from a single space that is shared by all QUIC versions (and options, see <a href="#quic_options">Section 6.1.2</a>).</p>
-<p id="rfc.section.6.1.1.p.5">This extension MUST be included if a QUIC version is negotiated.  A server MUST NOT negotiate QUIC if this extension is not present.  This could mean that a server might consequently send a fatal <samp>no_application_protocol</samp> alert.</p>
-<p id="rfc.section.6.1.1.p.6">Based on the values offered by a client a server MAY use the values in this extension to determine whether it wants to continue the connection, request source address validation, or reject the connection.  Since this extension is initially unencrypted (along with ALPN), the server can use the information prior to committing the resources needed to complete a key exchange.</p>
-<p id="rfc.section.6.1.1.p.7">If the server decides to use QUIC, this extension MUST be included in the EncryptedExtensions message.</p>
-<h3 id="rfc.section.6.1.2"><a href="#rfc.section.6.1.2">6.1.2.</a> <a href="#quic_options" id="quic_options">The quic_options Extension</a></h3>
-<p id="rfc.section.6.1.2.p.1">The <samp>quic_options</samp> extension includes a list of options that can be negotiated for a given connection.  These are set during the initial handshake and are fixed thereafter.  These options are used to enable or disable optional features in the protocol.</p>
+<p id="rfc.section.5.3.1.p.4">The QuicTransportParameterType identifies parameters.  This is taken from a single space that is shared by all QUIC versions (and options, see <a href="#quic_options">Section 5.3.2</a>).</p>
+<p id="rfc.section.5.3.1.p.5">This extension MUST be included if a QUIC version is negotiated.  A server MUST NOT negotiate QUIC if this extension is not present.  This could mean that a server might consequently send a fatal <samp>no_application_protocol</samp> alert.</p>
+<p id="rfc.section.5.3.1.p.6">Based on the values offered by a client a server MAY use the values in this extension to determine whether it wants to continue the connection, request source address validation, or reject the connection.  Since this extension is initially unencrypted (along with ALPN), the server can use the information prior to committing the resources needed to complete a key exchange.</p>
+<p id="rfc.section.5.3.1.p.7">If the server decides to use QUIC, this extension MUST be included in the EncryptedExtensions message.</p>
+<h3 id="rfc.section.5.3.2"><a href="#rfc.section.5.3.2">5.3.2.</a> <a href="#quic_options" id="quic_options">The quic_options Extension</a></h3>
+<p id="rfc.section.5.3.2.p.1">The <samp>quic_options</samp> extension includes a list of options that can be negotiated for a given connection.  These are set during the initial handshake and are fixed thereafter.  These options are used to enable or disable optional features in the protocol.</p>
 <pre>
    enum {
        (65535)
@@ -603,18 +591,18 @@ li, p {
        QuicOption options&lt;0..2^8-2&gt;;
    } QuicOptionsExtension;
 </pre>
-<p id="rfc.section.6.1.2.p.2">The set of features that are supported across different versions might vary.  A client SHOULD include all options that it is willing to use.  The server MAY select any subset of those options that apply to the version of QUIC that it selects.  Only those options selected by the server are available for use.</p>
+<p id="rfc.section.5.3.2.p.2">The set of features that are supported across different versions might vary.  A client SHOULD include all options that it is willing to use.  The server MAY select any subset of those options that apply to the version of QUIC that it selects.  Only those options selected by the server are available for use.</p>
 <p/>
 
 <dl>
   <dt>Note:</dt>
   <dd style="margin-left: 8">This sort of optional behaviour seems like it could be accommodated adequately by defining new versions of QUIC for each experiment.  However, as an evolving protocol, multiple experiments need to be conducted concurrently and continuously, which would overload the ALPN space.  This extension provides a flexible way to regulate which experiments are enabled on a per-connection basis.</dd>
 </dl>
-<p id="rfc.section.6.1.2.p.4">If the server decides to use any QUIC options, includes this extension in the EncryptedExtensions message.</p>
-<h2 id="rfc.section.6.2"><a href="#rfc.section.6.2">6.2.</a> <a href="#congestion-management-before-handshake-completion" id="congestion-management-before-handshake-completion">Congestion Management Before Handshake Completion</a></h2>
-<p id="rfc.section.6.2.p.1">In addition to the parameters for the transport, congestion feedback might need be exchanged prior to completing a key exchange is complete.</p>
-<p id="rfc.section.6.2.p.2">A new QUIC congestion extension might be included by clients to include any information.  Servers might include this extension if there is a need to use the HelloRetryRequest also.  Once the handshake is complete, this information can be exchanged as QUIC frames.</p>
-<p id="rfc.section.6.2.p.3">The use of extensions for the purpose has some potential drawbacks:</p>
+<p id="rfc.section.5.3.2.p.4">If the server decides to use any QUIC options, includes this extension in the EncryptedExtensions message.</p>
+<h2 id="rfc.section.5.4"><a href="#rfc.section.5.4">5.4.</a> <a href="#congestion-management-before-handshake-completion" id="congestion-management-before-handshake-completion">Congestion Management Before Handshake Completion</a></h2>
+<p id="rfc.section.5.4.p.1">In addition to the parameters for the transport, congestion feedback might need be exchanged prior to completing a key exchange is complete.</p>
+<p id="rfc.section.5.4.p.2">A new QUIC congestion extension might be included by clients to include any information.  Servers might include this extension if there is a need to use the HelloRetryRequest also.  Once the handshake is complete, this information can be exchanged as QUIC frames.</p>
+<p id="rfc.section.5.4.p.3">The use of extensions for the purpose has some potential drawbacks:</p>
 <p/>
 
 <ul>
@@ -622,26 +610,26 @@ li, p {
   <li>Extensions are authenticated, and therefore cannot contain updated information if they need to be retransmitted.</li>
   <li>Extensions that appear prior to the EncryptedExtensions do not have any confidentiality protection.</li>
 </ul>
-<p><a href="#dtls-feedback">Section 8.2</a> identifies the related issue of loss feedback mechanisms during the handshaking phase.</p>
-<h1 id="rfc.section.7"><a href="#rfc.section.7">7.</a> <a href="#record-protection" id="record-protection">Record Protection</a></h1>
-<p id="rfc.section.7.p.1">No major changes are required to transport frames as DTLS application data.  A small modification permits the use of a single contiguous sequence number space, so that QUIC can reuse DTLS sequence numbers rather than provide redundant numbering (see <a href="#seqno">Section 8.1</a>).</p>
-<h2 id="rfc.section.7.1"><a href="#rfc.section.7.1">7.1.</a> <a href="#entropy-bit" id="entropy-bit">Entropy Bit</a></h2>
-<p id="rfc.section.7.1.p.1">This can be removed, and is (apparently) already have been removed from current implementations.</p>
-<h2 id="rfc.section.7.2"><a href="#rfc.section.7.2">7.2.</a> <a href="#forward-error-control-fec" id="forward-error-control-fec">Forward Error Control (FEC)</a></h2>
-<p id="rfc.section.7.2.p.1">FEC can be covered by encryption and forms part of the framing layer.  The current protocol has some external parts, but these can be encrypted.</p>
-<h1 id="rfc.section.8"><a href="#rfc.section.8">8.</a> <a href="#modifications-to-dtls" id="modifications-to-dtls">Modifications to DTLS</a></h1>
-<p id="rfc.section.8.p.1">DTLS 1.3 does not need substantial modifications in order to support the more critical features of QUIC.  However, some additional changes might be made to optimize DTLS for use with QUIC.</p>
-<p id="rfc.section.8.p.2">Since the work on TLS 1.3 is not yet complete, these changes might be integrated before TLS 1.3 is completed.  Failing that, new extensions to TLS might be considered to negotiate their use.</p>
-<h2 id="rfc.section.8.1"><a href="#rfc.section.8.1">8.1.</a> <a href="#seqno" id="seqno">Sequence Numbers</a></h2>
-<p id="rfc.section.8.1.p.1">QUIC relies on a single sequence number space for identifying frames.  DTLS does not provide a contiguous sequence number space as each change of traffic keys causes sequence numbers to be reset.  This change occurs at the transition from 0-RTT application data to full application data, plus when traffic keys are updated.</p>
-<p id="rfc.section.8.1.p.2">The only reason for the separate sequence number space is to support the guarantees required by TLS.  For TLS, an attacker with access to record protection keys might be able to force loss of a number of packets that are protected by the next key.</p>
-<p id="rfc.section.8.1.p.3">DTLS does not rely on the same property, since it does not aim to secure a contiguous stream of data.  Attacker-induced loss is not distinguishable from other forms of loss.  For this reason, a single sequence number space is acceptable.</p>
-<h2 id="rfc.section.8.2"><a href="#rfc.section.8.2">8.2.</a> <a href="#dtls-feedback" id="dtls-feedback">Handshake Message Loss Recovery</a></h2>
-<p id="rfc.section.8.2.p.1">DTLS has a somewhat simplistic retransmission scheme for its handshake datagrams.  An entire flight of handshake messages is sent repeatedly by an endpoint until it receives a response from its peer.  In this regard, the QUIC scheme of acknowledgments is more precise in identifying and repairing missing datagrams.  Providing a more complete and accurate feedback mechanism would be valuable in reducing the performance of the handshake.</p>
-<h2 id="rfc.section.8.3"><a href="#rfc.section.8.3">8.3.</a> <a href="#packet" id="packet">DTLS Datagram Header</a></h2>
-<p id="rfc.section.8.3.p.1">DTLS 1.2 <a href="#RFC6347">[RFC6347]</a> has a rather large per-packet overhead.  This overhead includes a content type (1 octet), protocol version (2 octets), an epoch (2 octets), sequence number (6 octets) and length (2 octets), totalling 13 octets on every record.  Of these, only the sequence number and 14 bits of the record length are critical to the correct functioning of the protocol and both might be reduced in size.  A single bit of the epoch is useful in allowing an endpoint to more easily identify when keys change.</p>
-<p id="rfc.section.8.3.p.2">Note that a change to the packet format needs to be carefully designed if DTLS is to remain compatible with existing use cases.  DTLS-SRTP <a href="#RFC5764">[RFC5764]</a> relies on the value of the first octet of the DTLS packet not overlapping with valid values for SRTP <a href="#RFC3711">[RFC3711]</a> and STUN <a href="#RFC5389">[RFC5389]</a>.  Only values 20 through 63 inclusive are guaranteed to be available to DTLS in that context.</p>
-<p id="rfc.section.8.3.p.3">One possible design has a four octet header, comprising three fixed bits (001), 1 epoch bit, 12 sequence number bits, 2 zero bits, and 14 length bits.  This format would only apply to encrypted datagrams, since the ClientHello and ServerHello would need to be backward compatible.</p>
+<p><a href="#dtls-feedback">Section 7.2</a> identifies the related issue of loss feedback mechanisms during the handshaking phase.</p>
+<h1 id="rfc.section.6"><a href="#rfc.section.6">6.</a> <a href="#record-protection" id="record-protection">Record Protection</a></h1>
+<p id="rfc.section.6.p.1">No major changes are required to transport frames as DTLS application data.  A small modification permits the use of a single contiguous sequence number space, so that QUIC can reuse DTLS sequence numbers rather than provide redundant numbering (see <a href="#seqno">Section 7.1</a>).</p>
+<h2 id="rfc.section.6.1"><a href="#rfc.section.6.1">6.1.</a> <a href="#entropy-bit" id="entropy-bit">Entropy Bit</a></h2>
+<p id="rfc.section.6.1.p.1">This can be removed, and is (apparently) already have been removed from current implementations.</p>
+<h2 id="rfc.section.6.2"><a href="#rfc.section.6.2">6.2.</a> <a href="#forward-error-control-fec" id="forward-error-control-fec">Forward Error Control (FEC)</a></h2>
+<p id="rfc.section.6.2.p.1">FEC can be covered by encryption and forms part of the framing layer.  The current protocol has some external parts, but these can be encrypted.</p>
+<h1 id="rfc.section.7"><a href="#rfc.section.7">7.</a> <a href="#modifications-to-dtls" id="modifications-to-dtls">Modifications to DTLS</a></h1>
+<p id="rfc.section.7.p.1">DTLS 1.3 does not need substantial modifications in order to support the more critical features of QUIC.  However, some additional changes might be made to optimize DTLS for use with QUIC.</p>
+<p id="rfc.section.7.p.2">Since the work on TLS 1.3 is not yet complete, these changes might be integrated before TLS 1.3 is completed.  Failing that, new extensions to TLS might be considered to negotiate their use.</p>
+<h2 id="rfc.section.7.1"><a href="#rfc.section.7.1">7.1.</a> <a href="#seqno" id="seqno">Sequence Numbers</a></h2>
+<p id="rfc.section.7.1.p.1">QUIC relies on a single sequence number space for identifying frames.  DTLS does not provide a contiguous sequence number space as each change of traffic keys causes sequence numbers to be reset.  This change occurs at the transition from 0-RTT application data to full application data, plus when traffic keys are updated.</p>
+<p id="rfc.section.7.1.p.2">The only reason for the separate sequence number space is to support the guarantees required by TLS.  For TLS, an attacker with access to record protection keys might be able to force loss of a number of packets that are protected by the next key.</p>
+<p id="rfc.section.7.1.p.3">DTLS does not rely on the same property, since it does not aim to secure a contiguous stream of data.  Attacker-induced loss is not distinguishable from other forms of loss.  For this reason, a single sequence number space is acceptable.</p>
+<h2 id="rfc.section.7.2"><a href="#rfc.section.7.2">7.2.</a> <a href="#dtls-feedback" id="dtls-feedback">Handshake Message Loss Recovery</a></h2>
+<p id="rfc.section.7.2.p.1">DTLS has a somewhat simplistic retransmission scheme for its handshake datagrams.  An entire flight of handshake messages is sent repeatedly by an endpoint until it receives a response from its peer.  In this regard, the QUIC scheme of acknowledgments is more precise in identifying and repairing missing datagrams.  Providing a more complete and accurate feedback mechanism would be valuable in reducing the performance of the handshake.</p>
+<h2 id="rfc.section.7.3"><a href="#rfc.section.7.3">7.3.</a> <a href="#packet" id="packet">DTLS Datagram Header</a></h2>
+<p id="rfc.section.7.3.p.1">DTLS 1.2 <a href="#RFC6347">[RFC6347]</a> has a rather large per-packet overhead.  This overhead includes a content type (1 octet), protocol version (2 octets), an epoch (2 octets), sequence number (6 octets) and length (2 octets), totalling 13 octets on every record.  Of these, only the sequence number and 14 bits of the record length are critical to the correct functioning of the protocol and both might be reduced in size.  A single bit of the epoch is useful in allowing an endpoint to more easily identify when keys change.</p>
+<p id="rfc.section.7.3.p.2">Note that a change to the packet format needs to be carefully designed if DTLS is to remain compatible with existing use cases.  DTLS-SRTP <a href="#RFC5764">[RFC5764]</a> relies on the value of the first octet of the DTLS packet not overlapping with valid values for SRTP <a href="#RFC3711">[RFC3711]</a> and STUN <a href="#RFC5389">[RFC5389]</a>.  Only values 20 through 63 inclusive are guaranteed to be available to DTLS in that context.</p>
+<p id="rfc.section.7.3.p.3">One possible design has a four octet header, comprising three fixed bits (001), 1 epoch bit, 12 sequence number bits, 2 zero bits, and 14 length bits.  This format would only apply to encrypted datagrams, since the ClientHello and ServerHello would need to be backward compatible.</p>
 <div id="rfc.figure.5"/>
 <div id="packet-header"/>
 <pre>
@@ -650,17 +638,17 @@ li, p {
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 </pre>
 <p class="figure">Figure 5: Packet Header</p>
-<p id="rfc.section.8.3.p.4">The second set of zero bits could be used for an expanded sequence number space.  However, if there is any expectation of being able to use datagrams that are more than 4096 packets out of sequence, then adding another octet might be a better option, even if that results in destroying word alignment.</p>
-<p id="rfc.section.8.3.p.5">This design allows for unprotected messages such as unprotected handshake messages and the QUIC public reset to use values between 20 and 31 in the first octet.</p>
+<p id="rfc.section.7.3.p.4">The second set of zero bits could be used for an expanded sequence number space.  However, if there is any expectation of being able to use datagrams that are more than 4096 packets out of sequence, then adding another octet might be a better option, even if that results in destroying word alignment.</p>
+<p id="rfc.section.7.3.p.5">This design allows for unprotected messages such as unprotected handshake messages and the QUIC public reset to use values between 20 and 31 in the first octet.</p>
 <p/>
 
 <dl>
   <dt>Alternative Design:</dt>
   <dd style="margin-left: 8">If no multiplexing is necessary, more bits can be spent on the sequence number.  This might be possible if DTLS-SRTP 1.3 were modified to include a multiplexing header (a shim, as it were).</dd>
 </dl>
-<h3 id="rfc.section.8.3.1"><a href="#rfc.section.8.3.1">8.3.1.</a> <a href="#no-length-option" id="no-length-option">No Length Option</a></h3>
-<p id="rfc.section.8.3.1.p.1">If each UDP datagram is restricted to containing a single DTLS record, the length field could be omitted entirely, reducing the unencrypted overhead to as little as 2 octets.  The drawback of this approach is that it could require some additional UDP datagrams during the handshake, since changes to keying material can only happen when a new record is sent.</p>
-<p id="rfc.section.8.3.1.p.2">In TLS 1.3, these transitions are infrequent aside from during the initial handshake:</p>
+<h3 id="rfc.section.7.3.1"><a href="#rfc.section.7.3.1">7.3.1.</a> <a href="#no-length-option" id="no-length-option">No Length Option</a></h3>
+<p id="rfc.section.7.3.1.p.1">If each UDP datagram is restricted to containing a single DTLS record, the length field could be omitted entirely, reducing the unencrypted overhead to as little as 2 octets.  The drawback of this approach is that it could require some additional UDP datagrams during the handshake, since changes to keying material can only happen when a new record is sent.</p>
+<p id="rfc.section.7.3.1.p.2">In TLS 1.3, these transitions are infrequent aside from during the initial handshake:</p>
 <p/>
 
 <ul>
@@ -668,17 +656,29 @@ li, p {
   <li>the server&#8217;s first flight contains handshake records with two different traffic keys and optionally application data records and therefore three datagrams</li>
   <li>the client&#8217;s second flight contains two different packets</li>
 </ul>
-<h1 id="rfc.section.9"><a href="#rfc.section.9">9.</a> <a href="#security-considerations" id="security-considerations">Security Considerations</a></h1>
-<p id="rfc.section.9.p.1">Including data outside of the DTLS protection layer exposes endpoints to all sorts of intermediary-initiated shenanigans.</p>
-<p id="rfc.section.9.p.2">This includes transport parameter negotiation, which might ultimately have integrity protection.  If transport configuration is grounds for rejecting a connection, and a client adjusts its proposed configuration in response to a rejection, and that rejection is not authenticated (it won&#8217;t be), then an attacker can force a client to adjust their configuration.</p>
-<p id="rfc.section.9.p.3">Clients are therefore encouraged to not alter their ClientHello or its contents in response to unauthenticated rejections or network errors.</p>
-<h1 id="rfc.section.10"><a href="#rfc.section.10">10.</a> <a href="#iana-considerations" id="iana-considerations">IANA Considerations</a></h1>
-<p id="rfc.section.10.p.1">This document has no IANA actions.  Yet.</p>
-<p id="rfc.section.10.p.2">&#8211; back</p>
-<h1 id="rfc.section.11"><a href="#rfc.section.11">11.</a> <a href="#acknowledgments" id="acknowledgments">Acknowledgments</a></h1>
-<p id="rfc.section.11.p.1">Christian Huitema&#8217;s knowledge of QUIC is far better than my own.  This would be even more inaccurate and useless if not for his assistance.  This document has variously benefited from a long series of discussions with Ryan Hamilton, Jana Iyengar, Adam Langley, Roberto Peon, Ian Swett, and likely many others who are merely forgotten by a faulty meat computer.</p>
-<h1 id="rfc.references"><a href="#rfc.references">12.</a> References</h1>
-<h2 id="rfc.references.1"><a href="#rfc.references.1">12.1.</a> Normative References</h2>
+<h2 id="rfc.section.7.4"><a href="#rfc.section.7.4">7.4.</a> <a href="#connection-id" id="connection-id">Connection ID</a></h2>
+<p id="rfc.section.7.4.p.1">The QUIC connection identifier serves to identify a connection and to allow a server to resume an existing connection from a new client address in case of mobility events.  However, this creates an identifier that a passive observer <a href="#RFC7258">[RFC7258]</a> can use to correlate connections.</p>
+<p id="rfc.section.7.4.p.2">TLS 1.3 offers connection resumption using pre-shared keys, which also allows a client to send 0-RTT application data.  This mode could be used to continue a connection rather than rely on a publicly visible correlator.  This only requires that servers produce a new ticket on every connection and that clients do not resume from the same ticket more than once.</p>
+<p id="rfc.section.7.4.p.3">The advantage of relying on 0-RTT modes for mobility events is that this is also more robust.  If the new point of attachment results in contacting a new server instance - one that lacks the session state - then a fallback is easy.</p>
+<p id="rfc.section.7.4.p.4">The main drawback with a clean restart or anything resembling a restart is that accumulated state can be lost.  In particular, the state of the HPACK header compression table can be quite valuable.  Note that some QUIC implementations use part of the connection ID to identify the server that is handling the connection, enabling routing to that server and avoiding this sort of problem.</p>
+<p id="rfc.section.7.4.p.5">A lightweight state resurrection extension might be used to avoid having to recreate any expensive state.</p>
+<p/>
+
+<dl>
+  <dt>Editor&#8217;s Note:</dt>
+  <dd style="margin-left: 8">It&#8217;s not clear how mobility and public reset interact.  If the goal is to allow public reset messages to be sent by on-path entities, then using a connection ID to move a connection to a new path results in any entities on the new path not seeing the start of the connection and the nonce they need to generate the public reset.  A connection restart would avoid this issue.</dd>
+</dl>
+<h1 id="rfc.section.8"><a href="#rfc.section.8">8.</a> <a href="#security-considerations" id="security-considerations">Security Considerations</a></h1>
+<p id="rfc.section.8.p.1">Including data outside of the DTLS protection layer exposes endpoints to all sorts of intermediary-initiated shenanigans.</p>
+<p id="rfc.section.8.p.2">This includes transport parameter negotiation, which might ultimately have integrity protection.  If transport configuration is grounds for rejecting a connection, and a client adjusts its proposed configuration in response to a rejection, and that rejection is not authenticated (it won&#8217;t be), then an attacker can force a client to adjust their configuration.</p>
+<p id="rfc.section.8.p.3">Clients are therefore encouraged to not alter their ClientHello or its contents in response to unauthenticated rejections or network errors.</p>
+<h1 id="rfc.section.9"><a href="#rfc.section.9">9.</a> <a href="#iana-considerations" id="iana-considerations">IANA Considerations</a></h1>
+<p id="rfc.section.9.p.1">This document has no IANA actions.  Yet.</p>
+<p id="rfc.section.9.p.2">&#8211; back</p>
+<h1 id="rfc.section.10"><a href="#rfc.section.10">10.</a> <a href="#acknowledgments" id="acknowledgments">Acknowledgments</a></h1>
+<p id="rfc.section.10.p.1">Christian Huitema&#8217;s knowledge of QUIC is far better than my own.  This would be even more inaccurate and useless if not for his assistance.  This document has variously benefited from a long series of discussions with Ryan Hamilton, Jana Iyengar, Adam Langley, Roberto Peon, Ian Swett, and likely many others who are merely forgotten by a faulty meat computer.</p>
+<h1 id="rfc.references"><a href="#rfc.references">11.</a> References</h1>
+<h2 id="rfc.references.1"><a href="#rfc.references.1">11.1.</a> Normative References</h2>
 <table>
   <tbody>
     <tr>
@@ -707,7 +707,7 @@ li, p {
     </tr>
   </tbody>
 </table>
-<h2 id="rfc.references.2"><a href="#rfc.references.2">12.2.</a> Informative References</h2>
+<h2 id="rfc.references.2"><a href="#rfc.references.2">11.2.</a> Informative References</h2>
 <table>
   <tbody>
     <tr>
