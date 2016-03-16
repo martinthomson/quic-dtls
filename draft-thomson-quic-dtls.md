@@ -383,48 +383,6 @@ FEC can be covered by encryption and forms part of the framing layer.  The
 current protocol has some external parts, but these can be encrypted.
 
 
-## Sequence Numbers
-
-QUIC relies on a single sequence number space for identifying frames.  DTLS does
-not provide a contiguous sequence number space as each change of traffic keys
-causes sequence numbers to be reset.  This change occurs at the transition from
-0-RTT application data to full application data, plus when traffic keys are
-updated.
-
-DTLS sequence numbers could be used in QUIC acknowledgments, but some
-modification would be needed to allow for the epoch change and sequence number
-resets.
-
-A possible design has separate acknowledgment frames for different epochs.
-Reserving a small number of bits (a little as 1 or 2 bits would suffice) for
-identifying the epoch in longer sequence number representations would allow each
-acknowledgment frame be limited to that epoch.  Shorter representations might
-omit the epoch bits so that normal operation can identify a wider range of
-packets without inflating packet size inordinately.
-
-The consequence of this design is that there will be multiple acknowledgment
-frames sent for a short period after an epoch change.  A modification to QUIC's
-STOP_WAITING frame might be used to quickly end any need for acknowledgment on
-the expired epoch.
-
-Editor's Note:
-
-: The design of STOP_WAITING relies on the sequence number of the packet that it
-  is contained in.  That design doesn't work in this case.  Adding a single
-  octet that included the affected epoch would also allow the packet to be
-  self-contained and include a the sequence number length.
-
-There is no need to explicitly signal the sequence number of the last packet in
-an epoch.  The last sequence number for the epoch will be included in an
-acknowledgment.
-
-Alternative Design:
-
-: A separate sequence number space could be added to the DTLS-protected QUIC
-  frames, inside the protected DTLS record.  This is potentially redundant, but
-  it ensures that QUIC is more independent of DTLS.
-
-
 # Modifications to DTLS
 
 DTLS 1.3 does not need substantial modifications in order to support the more
@@ -434,6 +392,25 @@ optimize DTLS for use with QUIC.
 Since the work on TLS 1.3 is not yet complete, these changes might be integrated
 before TLS 1.3 is completed.  Failing that, new extensions to TLS might be
 considered to negotiate their use.
+
+
+## Sequence Numbers
+
+QUIC relies on a single sequence number space for identifying frames.  DTLS does
+not provide a contiguous sequence number space as each change of traffic keys
+causes sequence numbers to be reset.  This change occurs at the transition from
+0-RTT application data to full application data, plus when traffic keys are
+updated.
+
+The only reason for the separate sequence number space is to support the
+guarantees required by TLS.  For TLS, an attacker with access to record
+protection keys might be able to force loss of a number of packets that are
+protected by the next key.
+
+DTLS does not need to abide by this constraint since it does not promise a
+contiguous stream of packets. Attacker-induced loss is not distinguishable from
+other forms of loss.  For this reason, a single sequence number space is
+acceptable.
 
 
 ## Handshake Message Loss Recovery {#dtls-feedback}
@@ -474,11 +451,10 @@ ServerHello would need to be backward compatible.
 ~~~
 {: #packet-header title="Packet Header"}
 
-Note that the second set of zero bits could be used for an expanded sequence
-number space.  However, if there is any expectation of being able to use
-datagrams that are more than 4096 packets out of sequence, then adding another
-octet might be a better option, even if that results in destroying word
-alignment.
+The second set of zero bits could be used for an expanded sequence number space.
+However, if there is any expectation of being able to use datagrams that are
+more than 4096 packets out of sequence, then adding another octet might be a
+better option, even if that results in destroying word alignment.
 
 This design allows for unprotected messages such as unprotected handshake
 messages and the QUIC public reset to use values between 20 and 31 in the first
@@ -503,6 +479,12 @@ Alternative Design:
       datagrams
 
     * the client's second flight contains two different packets
+
+Alternative Design:
+
+: If no multiplexing is necessary, more bits can be spent on the sequence
+  number.  This might be possible if DTLS-SRTP 1.3 were modified to include a
+  multiplexing header (a shim, as it were).
 
 
 # Security Considerations
